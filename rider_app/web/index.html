@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Pink Fleets — Book now.">
+  <link rel="canonical" href="https://pinkfleets.com/book%20now">
+  <!-- Google Sign-In Client ID (Web) -->
+  <meta name="google-signin-client_id" content="93607564611-7u32e6fsg0jj11brh19tmuv2ru98chu.apps.googleusercontent.com">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Pink Fleets — Book Now">
+  <link rel="apple-touch-icon" href="icons/favicon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="icons/favicon.png"/>
+
+  <title>Pink Fleets — Book Now</title>
+  <link rel="manifest" href="manifest.json">
+  <!-- Legacy placeholders kept for older JS interop paths; no Maps JS SDK is loaded here. -->
+  <script>
+    window._autocompleteService = null;
+    window._placesService = null;
+    window._sessionToken = null;
+    window.__pfMapsReady = false;
+    window.initMap = window.initMap || function() {};
+    window.__pfMapsErrorListenerAttached = window.__pfMapsErrorListenerAttached || false;
+
+    // Legacy no-op hook if a Maps SDK is ever injected externally.
+    window.initMap = function() {
+      window.__pfMapsReady = !!(window.google && window.google.maps);
+      console.log('[PF MAP] initMap callback fired');
+      if (window.google && window.google.maps && window.google.maps.places) {
+        window._autocompleteService = new google.maps.places.AutocompleteService();
+        var div = document.createElement('div');
+        window._placesService = new google.maps.places.PlacesService(div);
+      }
+    };
+
+    if (!window.__pfMapsErrorListenerAttached) {
+      window.addEventListener('error', function(e) {
+        var msg = (e && e.message) ? e.message : '';
+        if ((msg || '').toLowerCase().includes('google maps')) {
+          console.error('[PF MAP] GOOGLE MAPS SCRIPT ERROR:', msg);
+        }
+      });
+      window.__pfMapsErrorListenerAttached = true;
+    }
+
+    // Promise-based helpers — called from Flutter via dart:js_interop.
+    // Using Promises avoids Dart→JS callback registration issues.
+    window.pfGetPredictions = function(input) {
+      return new Promise(function(resolve, reject) {
+        if (!window._autocompleteService && window.google && window.google.maps && window.google.maps.places) {
+          window.initMap();
+        }
+        if (!window._autocompleteService) { reject(new Error('NO_SERVICE')); return; }
+        if (!window._sessionToken) {
+          window._sessionToken = new google.maps.places.AutocompleteSessionToken();
+        }
+        window._autocompleteService.getPlacePredictions({
+          input: input,
+          types: ['address'],
+          language: 'en',
+          componentRestrictions: { country: 'us' },
+          location: new google.maps.LatLng(29.9511, -90.0715),
+          radius: 50000,
+          sessionToken: window._sessionToken,
+        }, function(predictions, status) {
+          if (status === 'OK' && predictions && predictions.length > 0) {
+            resolve(predictions.map(function(p) {
+              return { description: p.description, place_id: p.place_id };
+            }));
+          } else if (status === 'ZERO_RESULTS' || status === 'OK') {
+            resolve([]);
+          } else {
+            // Reject so Dart can surface the real error (REQUEST_DENIED, OVER_QUERY_LIMIT, etc.)
+            reject(new Error(status || 'UNKNOWN_ERROR'));
+          }
+        });
+      });
+    };
+
+    // Backward-compatible callback helpers (used by Dart callback interop).
+    window.getAddressPredictions = function(input, callback) {
+      window.pfGetPredictions(input)
+        .then(function(items) { callback(items, 'OK'); })
+        .catch(function(err) {
+          var code = (err && err.message) ? err.message : 'ERROR';
+          callback([], code);
+        });
+    };
+
+    window.pfGetPlaceDetails = function(placeId) {
+      return new Promise(function(resolve, reject) {
+        if (!window._placesService && window.google && window.google.maps && window.google.maps.places) {
+          window.initMap();
+        }
+        if (!window._placesService) { reject(new Error('NO_SERVICE')); return; }
+        window._placesService.getDetails(
+          { placeId: placeId, fields: ['geometry'], sessionToken: window._sessionToken },
+          function(result, status) {
+            window._sessionToken = null;
+            if (status === google.maps.places.PlacesServiceStatus.OK && result && result.geometry) {
+              var loc = result.geometry.location;
+              resolve({ lat: loc.lat(), lng: loc.lng() });
+            } else {
+              resolve(null);
+            }
+          }
+        );
+      });
+    };
+
+    window.getPlaceDetails = function(placeId, callback) {
+      window.pfGetPlaceDetails(placeId)
+        .then(function(item) { callback(item, item ? 'OK' : 'ZERO_RESULTS'); })
+        .catch(function(err) {
+          var code = (err && err.message) ? err.message : 'ERROR';
+          callback(null, code);
+        });
+    };
+  </script>
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

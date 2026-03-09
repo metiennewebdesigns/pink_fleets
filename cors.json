@@ -1,0 +1,35 @@
+[
+  {
+    "origin": [
+      "https://pink-fleets.web.app",
+      "https://pink-fleets.firebaseapp.com",
+      "https://pink-fleets-book-now.web.app",
+      "https://pink-fleets-book-now.firebaseapp.com",
+      "https://pink-fleets-driver.web.app",
+      "https://pink-fleets-driver.firebaseapp.com",
+      "https://pink-fleets-admin.web.app",
+      "https://pink-fleets-admin.firebaseapp.com",
+      "https://pink-fleets-dispatcher.web.app",
+      "https://pink-fleets-dispatcher.firebaseapp.com",
+      "https://pinkfleets.com",
+      "https://www.pinkfleets.com",
+      "http://localhost:64327",
+      "http://localhost:49405",
+      "http://localhost:63034",
+      "http://localhost:60053",
+      "http://localhost:60175",
+      "http://localhost:5173",
+      "http://localhost:55441"
+    ],
+    "method": ["GET", "HEAD", "OPTIONS", "POST", "PUT", "DELETE"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "x-goog-resumable",
+      "x-goog-meta-*",
+      "x-goog-upload-*",
+      "x-goog-*"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
