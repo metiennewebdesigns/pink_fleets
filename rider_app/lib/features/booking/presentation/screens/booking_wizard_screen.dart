@@ -156,36 +156,6 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
     return true;
   }
 
-  Future<bool> _ensureRiderContactInfo(BuildContext context) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return false;
-
-    final riderSnap = await FirebaseFirestore.instance
-        .collection('riders')
-        .doc(user.uid)
-        .get();
-    final rider = riderSnap.data() ?? <String, dynamic>{};
-
-    final name = (rider['name'] ?? user.displayName ?? '').toString().trim();
-    final email = (rider['email'] ?? user.email ?? '').toString().trim();
-    final phone = (rider['phone'] ?? user.phoneNumber ?? '').toString().trim();
-
-    if (name.isNotEmpty && email.isNotEmpty && phone.isNotEmpty) {
-      return true;
-    }
-
-    if (!context.mounted) return false;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Please enter your name, phone number, and email before completing your booking.',
-        ),
-      ),
-    );
-    context.go('/portal');
-    return false;
-  }
-
   Future<String> _createBooking(Map<String, dynamic> payload) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -304,10 +274,6 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                 errorText: state.error,
                 requiresCall: requiresCallEffective,
                 onPrimaryPressed: () async {
-                  final okLogin = await _ensureLoggedIn(context);
-                  if (!okLogin) return;
-                  if (!context.mounted) return;
-
                   if (requiresCallEffective) {
                     _showCallDialog(context, overrideMessage: state.error, phone: supportPhone);
                     return;
@@ -418,9 +384,6 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                       final okLogin = await _ensureLoggedIn(context);
                       if (!okLogin) return;
                       if (!context.mounted) return;
-                      final okContact = await _ensureRiderContactInfo(context);
-                      if (!okContact) return;
-                      if (!context.mounted) return;
 
                       final validForQuote = ctrl.validateForQuote();
                       if (!validForQuote) {
@@ -501,9 +464,6 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
 
                   final okLogin = await _ensureLoggedIn(context);
                   if (!okLogin) return;
-                  if (!context.mounted) return;
-                  final okContact = await _ensureRiderContactInfo(context);
-                  if (!okContact) return;
                   if (!context.mounted) return;
 
                   showDialog(
