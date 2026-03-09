@@ -82,7 +82,6 @@ class _LoginScreenState extends State<LoginScreen>
         await auth.signInWithEmailAndPassword(email: email, password: pass);
       } else {
         if (displayName.isEmpty) throw Exception('Please enter your name.');
-        if (phone.isEmpty) throw Exception('Please enter your phone number.');
         final cred = EmailAuthProvider.credential(email: email, password: pass);
         UserCredential userCred;
         if (auth.currentUser?.isAnonymous == true) {
@@ -110,8 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
       context.go('/booking');
     } catch (e) {
       if (!mounted) return;
-      final msg = e.toString().replaceFirst('Exception: ', '').trim();
-      setState(() => _error = msg.isEmpty ? 'Incorrect username and/or password' : msg);
+      setState(() => _error = 'Incorrect username and/or password');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -423,7 +421,7 @@ class _FormCard extends StatelessWidget {
               const SizedBox(height: 14),
               _LightField(
                 controller: phone,
-                label: 'Phone',
+                label: 'Phone (optional)',
                 keyboardType: TextInputType.phone,
                 autofillHints: const [AutofillHints.telephoneNumber],
                 textInputAction: TextInputAction.next,

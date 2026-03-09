@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/booking_draft.dart';
 
@@ -296,24 +295,6 @@ class BookingController extends StateNotifier<BookingState> {
       return null;
     }
 
-    final riderSnap = await FirebaseFirestore.instance
-        .collection('riders')
-        .doc(user.uid)
-        .get();
-    final rider = riderSnap.data() ?? <String, dynamic>{};
-    final riderName = (rider['name'] ?? user.displayName ?? '').toString().trim();
-    final riderEmail =
-        (rider['email'] ?? user.email ?? '').toString().trim().toLowerCase();
-    final riderPhone =
-        (rider['phone'] ?? user.phoneNumber ?? '').toString().trim();
-
-    if (riderName.isEmpty || riderEmail.isEmpty || riderPhone.isEmpty) {
-      state = state.copyWith(
-        error: 'Please enter your name, phone number, and email before completing your booking.',
-      );
-      return null;
-    }
-
     final payload = jsonEncode({
       'pickupAddress':   d.pickup,
       'dropoffAddress':  d.dropoff,
@@ -327,9 +308,6 @@ class BookingController extends StateNotifier<BookingState> {
       'durationHours':     d.durationHours,
       'passengers':        d.passengers,
       'vehicleType':       d.vehicleType.name,
-      'riderName':         riderName,
-      'riderEmail':        riderEmail,
-      'riderPhone':        riderPhone,
       // 'stops':             d.stops, // Removed: BookingDraft has no 'stops' property
     });
 
