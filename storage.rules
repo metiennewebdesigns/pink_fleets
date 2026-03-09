@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function role() { return request.auth.token.role; }
+    function isAdmin() { return signedIn() && role() == 'admin'; }
+    function isDispatcher() { return signedIn() && role() == 'dispatcher'; }
+
+    match /bookings/{bookingId}/inspections/{stage}/{fileName} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    match /riders/{riderUid}/profile/{fileName} {
+      allow read: if signedIn() && (isAdmin() || isDispatcher() || request.auth.uid == riderUid);
+      allow write: if signedIn() && request.auth.uid == riderUid;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter build web --release)",
+      "Bash(firebase hosting:channel:list --project pink-fleets)",
+      "Bash(firebase deploy --only hosting:rider --project pink-fleets)"
+    ]
+  }
+}

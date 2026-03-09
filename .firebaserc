@@ -1,0 +1,27 @@
+{
+  "projects": {
+    "default": "pink-fleets"
+  },
+  "targets": {
+    "pink-fleets": {
+      "hosting": {
+        "rider": [
+          "pink-fleets-book-now"
+        ],
+        "dispatcher": [
+          "pink-fleets-dispatcher"
+        ],
+        "driver": [
+          "pink-fleets-driver"
+        ],
+        "admin": [
+          "pink-fleets-admin"
+        ],
+        "portal": [
+          "pink-fleets-portal"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

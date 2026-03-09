@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "93607564611",
+    "project_id": "pink-fleets",
+    "storage_bucket": "pink-fleets.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93607564611:android:f9b961373d5137d09e4bf6",
+        "android_client_info": {
+          "package_name": "com.example.admin_web"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "93607564611-4do0js8sihuj34q3k8neu0q7d195uk4l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6-VotzMnnMnTEa5Q4Y8R8glcSBoc96TY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "93607564611-4do0js8sihuj34q3k8neu0q7d195uk4l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "93607564611-6nnjaq8iil530u850rsdot858021bbdk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.adminWeb"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93607564611:android:d274ccd2517b74459e4bf6",
+        "android_client_info": {
+          "package_name": "com.example.driver_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "93607564611-4do0js8sihuj34q3k8neu0q7d195uk4l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6-VotzMnnMnTEa5Q4Y8R8glcSBoc96TY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "93607564611-4do0js8sihuj34q3k8neu0q7d195uk4l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "93607564611-6nnjaq8iil530u850rsdot858021bbdk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.adminWeb"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

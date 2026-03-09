@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function role() { return request.auth.token.role; }
+
+    function isAdmin() { return signedIn() && role() == 'admin'; }
+    function isDispatcher() { return signedIn() && role() == 'dispatcher'; }
+    function isDriver() { return signedIn() && role() == 'driver'; }
+    function isRider() { return signedIn() && (role() == null || role() == 'rider'); }
+    function isBookingOwner(bookingId) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/bookings/$(bookingId)).data.riderUid == uid();
+    }
+
+    // ✅ OPERATIONAL BOOKINGS (NO money fields should live here)
+    match /bookings/{bookingId} {
+      // Admin + Dispatcher can operate bookings
+      allow read, write: if isAdmin() || isDispatcher();
+
+      // Rider can read their own booking
+      allow read: if signedIn() && resource.data.riderUid == uid();
+      allow create: if signedIn() && request.resource.data.riderUid == uid();
+
+      // Driver can read assigned booking and update limited fields
+      allow read: if isDriver() && resource.data.assigned.driverId == uid();
+      allow update: if isDriver()
+        && resource.data.assigned.driverId == uid()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'status','actualStartAt','actualEndAt','overtime','updatedAt'
+        ]);
+
+      match /notes/{noteId} {
+        allow read, write: if isAdmin() || isDispatcher();
+      }
+
+      match /driver_inspections/{inspectionId} {
+        allow read: if (isAdmin() || isDispatcher()) ||
+          (signedIn() && get(/databases/$(database)/documents/bookings/$(bookingId)).data.assigned.driverId == uid());
+        allow write: if signedIn()
+          && get(/databases/$(database)/documents/bookings/$(bookingId)).data.assigned.driverId == uid();
+      }
+
+      match /inspectionMedia/{mediaId} {
+        allow read: if (isAdmin() || isDispatcher()) ||
+          (signedIn() && get(/databases/$(database)/documents/bookings/$(bookingId)).data.assigned.driverId == uid());
+        allow write: if (isAdmin() || isDispatcher()) ||
+          (signedIn() && get(/databases/$(database)/documents/bookings/$(bookingId)).data.assigned.driverId == uid());
+      }
+    }
+
+    // ✅ PRIVATE MONEY/PAYMENTS — ADMIN ONLY
+    match /bookings_private/{bookingId} {
+      allow read, write: if isAdmin();
+      allow read: if isBookingOwner(bookingId);
+    }
+
+    match /drivers/{driverId} {
+      allow read, write: if isAdmin() || isDispatcher() || (isDriver() && driverId == uid());
+    }
+
+    match /dispatchers/{dispatcherId} {
+      allow read, write: if isAdmin() || isDispatcher() || (signedIn() && dispatcherId == uid());
+    }
+
+    match /admins/{adminId} {
+      allow read, write: if isAdmin() || (signedIn() && adminId == uid());
+    }
+
+    match /vehicles/{vehicleId} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || isDispatcher();
+    }
+
+    match /admin_settings/{docId} {
+      // Rider/driver/admin apps all need to read app configuration.
+      allow read: if isAdmin() || isDispatcher();
+      allow write: if isAdmin();
+    }
+
+    match /riders/{riderUid} {
+      allow read, write: if isAdmin() || (signedIn() && riderUid == uid());
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
