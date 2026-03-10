@@ -16,7 +16,9 @@ class DispatcherGate extends ConsumerWidget {
     return auth.when(
       data: (user) {
         if (user == null) {
-          Future.microtask(() => context.go('/login'));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go('/login');
+          });
           return const _BrandedLoading(title: 'Dispatcher');
         }
 

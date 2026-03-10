@@ -87,8 +87,10 @@ class _LoginScreenState extends State<LoginScreen>
         if (auth.currentUser?.isAnonymous == true) {
           userCred = await auth.currentUser!.linkWithCredential(cred);
         } else {
-          userCred =
-              await auth.createUserWithEmailAndPassword(email: email, password: pass);
+          userCred = await auth.createUserWithEmailAndPassword(
+            email: email,
+            password: pass,
+          );
         }
         if (displayName.isNotEmpty) {
           await userCred.user?.updateDisplayName(displayName);
@@ -97,12 +99,12 @@ class _LoginScreenState extends State<LoginScreen>
             .collection('riders')
             .doc(userCred.user!.uid)
             .set({
-          'name': displayName,
-          'email': email,
-          'phone': phone,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+              'name': displayName,
+              'email': email,
+              'phone': phone,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       }
 
       if (!mounted) return;
@@ -152,12 +154,12 @@ class _LoginScreenState extends State<LoginScreen>
             .collection('riders')
             .doc(user.uid)
             .set({
-          'name': user.displayName ?? '',
-          'email': (user.email ?? '').toLowerCase(),
-          'phone': user.phoneNumber ?? '',
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+              'name': user.displayName ?? '',
+              'email': (user.email ?? '').toLowerCase(),
+              'phone': user.phoneNumber ?? '',
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       }
 
       if (!mounted) return;
@@ -185,10 +187,12 @@ class _LoginScreenState extends State<LoginScreen>
               height: 420,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [
-                  PFLightColors.primary.withValues(alpha: 0.08),
-                  Colors.transparent,
-                ]),
+                gradient: RadialGradient(
+                  colors: [
+                    PFLightColors.primary.withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
@@ -200,10 +204,12 @@ class _LoginScreenState extends State<LoginScreen>
               height: 340,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [
-                  PFLightColors.gold.withValues(alpha: 0.06),
-                  Colors.transparent,
-                ]),
+                gradient: RadialGradient(
+                  colors: [
+                    PFLightColors.gold.withValues(alpha: 0.06),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
@@ -226,14 +232,15 @@ class _LoginScreenState extends State<LoginScreen>
                             'assets/logo/pink_fleets_logo.png',
                             fit: BoxFit.contain,
                             filterQuality: FilterQuality.high,
-                            errorBuilder: (_, __, ___) => const Text(
-                              'PINK FLEETS',
-                              style: TextStyle(
-                                color: PFLightColors.ink,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 20,
-                              ),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Text(
+                                  'PINK FLEETS',
+                                  style: TextStyle(
+                                    color: PFLightColors.ink,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 20,
+                                  ),
+                                ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -433,7 +440,10 @@ class _FormCard extends StatelessWidget {
               controller: email,
               label: 'Email',
               keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.username, AutofillHints.email],
+              autofillHints: const [
+                AutofillHints.username,
+                AutofillHints.email,
+              ],
               textInputAction: TextInputAction.next,
               onSubmitted: (_) => FocusScope.of(context).nextFocus(),
             ),
@@ -461,12 +471,16 @@ class _FormCard extends StatelessWidget {
             if (error != null) ...[
               const SizedBox(height: 14),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: PFLightColors.dangerSoft,
                   borderRadius: BorderRadius.circular(PFSpacing.radius),
                   border: Border.all(
-                      color: PFLightColors.danger.withValues(alpha: 0.3)),
+                    color: PFLightColors.danger.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Text(
                   error!,
@@ -550,7 +564,9 @@ class _LightField extends StatelessWidget {
         // hintText: hint, // Removed: undefined variable
         labelStyle: const TextStyle(color: PFLightColors.muted, fontSize: 13),
         hintStyle: TextStyle(
-            color: PFLightColors.muted.withValues(alpha: 0.6), fontSize: 14),
+          color: PFLightColors.muted.withValues(alpha: 0.6),
+          fontSize: 14,
+        ),
         filled: true,
         fillColor: PFLightColors.surface,
         suffixIcon: suffixIcon,
@@ -560,7 +576,10 @@ class _LightField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(PFSpacing.radius),
-          borderSide: const BorderSide(color: PFLightColors.primary, width: 1.5),
+          borderSide: const BorderSide(
+            color: PFLightColors.primary,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(PFSpacing.radius),
@@ -580,8 +599,11 @@ class _ActionButton extends StatefulWidget {
   final bool loading;
   final VoidCallback onTap;
 
-  const _ActionButton(
-      {required this.label, required this.loading, required this.onTap});
+  const _ActionButton({
+    required this.label,
+    required this.loading,
+    required this.onTap,
+  });
 
   @override
   State<_ActionButton> createState() => _ActionButtonState();
@@ -627,7 +649,9 @@ class _ActionButtonState extends State<_ActionButton> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
                       widget.label,
@@ -676,8 +700,11 @@ class _GoogleButtonState extends State<_GoogleButton> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.g_mobiledata_rounded,
-                  size: 22, color: PFLightColors.muted),
+              Icon(
+                Icons.g_mobiledata_rounded,
+                size: 22,
+                color: PFLightColors.muted,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Continue with Google',

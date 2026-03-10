@@ -48,7 +48,6 @@ class _DriverHomeState extends ConsumerState<DriverHome>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FcmTokenService.initializeFCMListeners(
-        context,
         onOfferReceived: (bookingId, offerId) {
           Navigator.push(
             context,
@@ -79,7 +78,8 @@ class _DriverHomeState extends ConsumerState<DriverHome>
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
-    if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+    if (perm == LocationPermission.deniedForever ||
+        perm == LocationPermission.denied) {
       throw Exception('Location permission not granted');
     }
   }
@@ -91,7 +91,11 @@ class _DriverHomeState extends ConsumerState<DriverHome>
     try {
       await _ensurePermission();
 
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
 
       await db.collection('drivers').doc(uid).set({
         'lat': pos.latitude,
@@ -105,24 +109,29 @@ class _DriverHomeState extends ConsumerState<DriverHome>
       }, SetOptions(merge: true));
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location sent')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Location sent')));
       }
     } catch (e) {
       if (context.mounted) {
         final msg = e.toString();
-        final isFirestoreInternal = msg.contains('FIRESTORE') && msg.contains('INTERNAL ASSERTION FAILED');
+        final isFirestoreInternal = msg.contains('FIRESTORE') &&
+            msg.contains('INTERNAL ASSERTION FAILED');
 
         if (isFirestoreInternal) {
           if (!_suppressedLocationErrorShown) {
             _suppressedLocationErrorShown = true;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location temporarily unavailable on mobile web. Please retry.')),
+              const SnackBar(
+                  content: Text(
+                      'Location temporarily unavailable on mobile web. Please retry.')),
             );
           }
           return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Location error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Location error: $e')));
       }
     } finally {
       _sending = false;
@@ -149,9 +158,8 @@ class _DriverHomeState extends ConsumerState<DriverHome>
     final auth = ref.watch(firebaseAuthProvider);
 
     final driverDoc = db.collection('drivers').doc(uid);
-    final bookingsQ = db
-        .collection('bookings')
-        .where('assigned.driverId', isEqualTo: uid);
+    final bookingsQ =
+        db.collection('bookings').where('assigned.driverId', isEqualTo: uid);
 
     return Scaffold(
       backgroundColor: PFColors.canvas,
@@ -193,14 +201,12 @@ class _DriverHomeState extends ConsumerState<DriverHome>
                   children: [
                     _HeroBanner(),
                     const SizedBox(height: PFSpacing.base),
-
                     StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                       stream: driverDoc.snapshots(),
                       builder: (context, snap) {
                         final data = snap.data?.data() ?? {};
                         final name = (data['name'] ?? 'Driver').toString();
-                        final status =
-                            (data['status'] ?? 'offline').toString();
+                        final status = (data['status'] ?? 'offline').toString();
                         final online = status == 'online';
 
                         if (online && _heartbeat == null) _startHeartbeat(db);
@@ -221,12 +227,12 @@ class _DriverHomeState extends ConsumerState<DriverHome>
                               'status': v ? 'online' : 'offline',
                               'updatedAt': FieldValue.serverTimestamp(),
                             }, SetOptions(merge: true));
+                            if (!context.mounted) return;
                             if (v) _sendLocation(context, db);
                           },
                         );
                       },
                     ),
-
                     const SizedBox(height: PFSpacing.xl),
                     const PFSectionHeader(title: 'Assigned Trips'),
                     const SizedBox(height: PFSpacing.md),
@@ -246,8 +252,8 @@ class _DriverHomeState extends ConsumerState<DriverHome>
                             children: List.generate(
                               3,
                               (_) => Padding(
-                                padding: const EdgeInsets.only(
-                                    bottom: PFSpacing.sm),
+                                padding:
+                                    const EdgeInsets.only(bottom: PFSpacing.sm),
                                 child: PFSkeleton.card(height: 80),
                               ),
                             ),
@@ -259,18 +265,15 @@ class _DriverHomeState extends ConsumerState<DriverHome>
                           return const PFEmptyState(
                             icon: Icons.directions_car_outlined,
                             title: 'No trips assigned yet',
-                            body:
-                                'Go online to start receiving ride requests.',
+                            body: 'Go online to start receiving ride requests.',
                           );
                         }
 
                         docs.sort((a, b) {
-                          final at =
-                              (a.data()['createdAt'] as Timestamp?)
+                          final at = (a.data()['createdAt'] as Timestamp?)
                                   ?.millisecondsSinceEpoch ??
                               0;
-                          final bt =
-                              (b.data()['createdAt'] as Timestamp?)
+                          final bt = (b.data()['createdAt'] as Timestamp?)
                                   ?.millisecondsSinceEpoch ??
                               0;
                           return bt.compareTo(at);
@@ -438,8 +441,7 @@ class _DriverStatusCard extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               title: Text(
                 'Availability',
-                style: PFTypography.titleSmall
-                    .copyWith(color: PFColors.ink),
+                style: PFTypography.titleSmall.copyWith(color: PFColors.ink),
               ),
               subtitle: Text(
                 online ? 'Receiving trip requests' : 'Not receiving trips',
@@ -531,8 +533,7 @@ class _TripCardState extends State<_TripCard>
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: PFAnimations.slow);
     _fade = CurvedAnimation(parent: _ctrl, curve: PFAnimations.curve);
-    _slide =
-        Tween(begin: const Offset(0, 0.08), end: Offset.zero).animate(
+    _slide = Tween(begin: const Offset(0, 0.08), end: Offset.zero).animate(
       CurvedAnimation(parent: _ctrl, curve: PFAnimations.curve),
     );
     Future.delayed(Duration(milliseconds: 60 * widget.index), () {
@@ -573,10 +574,9 @@ class _TripCardState extends State<_TripCard>
                   height: 40,
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
-                    borderRadius:
-                        BorderRadius.circular(PFSpacing.radiusSm),
-                    border: Border.all(
-                        color: statusColor.withValues(alpha: 0.4)),
+                    borderRadius: BorderRadius.circular(PFSpacing.radiusSm),
+                    border:
+                        Border.all(color: statusColor.withValues(alpha: 0.4)),
                   ),
                   child: Icon(Icons.directions_car_rounded,
                       color: statusColor, size: 18),

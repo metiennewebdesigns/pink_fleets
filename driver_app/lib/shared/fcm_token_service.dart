@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 /// Background handler MUST be a top-level function.
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -35,30 +34,30 @@ class FcmTokenService {
   }
 
   /// Call this ONCE after login (or on app start if already logged in)
-  static void initializeFCMListeners(
-    BuildContext context, {
+  static void initializeFCMListeners({
     required void Function(String bookingId, String offerId) onOfferReceived,
   }) {
     // Foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      await _handleMessage(context, message, onOfferReceived);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _handleMessage(message, onOfferReceived);
     });
 
     // Opened from background
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
-      await _handleMessage(context, message, onOfferReceived);
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleMessage(message, onOfferReceived);
     });
 
     // Opened from terminated
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) async {
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
       if (message != null) {
-        await _handleMessage(context, message, onOfferReceived);
+        _handleMessage(message, onOfferReceived);
       }
     });
   }
 
   static Future<void> _handleMessage(
-    BuildContext context,
     RemoteMessage message,
     void Function(String bookingId, String offerId) onOfferReceived,
   ) async {

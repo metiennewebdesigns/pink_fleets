@@ -109,6 +109,7 @@ class _IncomingOfferScreenState extends State<IncomingOfferScreen> {
       }
 
       await _unlockDriverOffer();
+      if (!mounted) return;
 
       Navigator.pop(context, decision);
     } catch (e) {
@@ -186,9 +187,7 @@ class _IncomingOfferScreenState extends State<IncomingOfferScreen> {
                             ? 'Offer expired'
                             : 'Respond within 60 seconds to accept this trip.',
                         style: TextStyle(
-                          color: _expired
-                              ? PFColors.danger
-                              : PFColors.muted,
+                          color: _expired ? PFColors.danger : PFColors.muted,
                           fontWeight: FontWeight.w800,
                           height: 1.2,
                         ),
@@ -220,10 +219,12 @@ class _IncomingOfferScreenState extends State<IncomingOfferScreen> {
               const Spacer(),
 
               ElevatedButton(
-                onPressed: (_loading || _expired) ? null : () => _respond('accept'),
+                onPressed:
+                    (_loading || _expired) ? null : () => _respond('accept'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
                 ),
                 child: _loading
                     ? const SizedBox(
@@ -231,17 +232,21 @@ class _IncomingOfferScreenState extends State<IncomingOfferScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('ACCEPT', style: TextStyle(fontWeight: FontWeight.w900)),
+                    : const Text('ACCEPT',
+                        style: TextStyle(fontWeight: FontWeight.w900)),
               ),
               const SizedBox(height: 10),
               OutlinedButton(
-                onPressed: (_loading || _expired) ? null : () => _respond('decline'),
+                onPressed:
+                    (_loading || _expired) ? null : () => _respond('decline'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
                   side: const BorderSide(color: PFColors.border),
                 ),
-                child: const Text('DECLINE', style: TextStyle(fontWeight: FontWeight.w900)),
+                child: const Text('DECLINE',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
               ),
             ],
           ),

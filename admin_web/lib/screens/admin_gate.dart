@@ -15,8 +15,11 @@ class AdminGate extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user == null) {
-          Future.microtask(() => context.go('/login'));
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go('/login');
+          });
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
 
         final isAdmin = ref.watch(isAdminProvider);
@@ -34,11 +37,14 @@ class AdminGate extends ConsumerWidget {
             }
             return child;
           },
-          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (e, _) => Scaffold(body: Center(child: Text('Admin check failed: $e'))),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, _) =>
+              Scaffold(body: Center(child: Text('Admin check failed: $e'))),
         );
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Auth error: $e'))),
     );
   }

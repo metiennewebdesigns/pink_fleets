@@ -18,7 +18,9 @@ class AuthGate extends ConsumerWidget {
     return auth.when(
       data: (user) {
         if (user == null) {
-          Future.microtask(() => context.go('/login'));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go('/login');
+          });
           return const _BrandedLoading(title: 'Driver');
         }
 
@@ -40,7 +42,8 @@ class AuthGate extends ConsumerWidget {
         );
       },
       loading: () => const _BrandedLoading(title: 'Driver'),
-      error: (e, _) => _BrandedMessage(title: 'Auth error', subtitle: e.toString()),
+      error: (e, _) =>
+          _BrandedMessage(title: 'Auth error', subtitle: e.toString()),
     );
   }
 

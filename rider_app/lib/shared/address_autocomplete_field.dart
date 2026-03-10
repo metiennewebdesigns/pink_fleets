@@ -1,9 +1,7 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
-
 
 class AddressSuggestion {
   final String description;
@@ -17,11 +15,11 @@ class PlaceLatLng {
   PlaceLatLng(this.lat, this.lng);
 }
 
-
 class AddressAutocompleteField extends StatefulWidget {
   final String label;
   final String hint;
-  final void Function(String text, String? placeId, PlaceLatLng? latLng) onChangedOrSelected;
+  final void Function(String text, String? placeId, PlaceLatLng? latLng)
+  onChangedOrSelected;
   const AddressAutocompleteField({
     super.key,
     required this.label,
@@ -29,9 +27,9 @@ class AddressAutocompleteField extends StatefulWidget {
     required this.onChangedOrSelected,
   });
   @override
-  State<AddressAutocompleteField> createState() => _AddressAutocompleteFieldState();
+  State<AddressAutocompleteField> createState() =>
+      _AddressAutocompleteFieldState();
 }
-
 
 class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
   final TextEditingController _ctrl = TextEditingController();
@@ -41,8 +39,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
   static const _minLen = 3;
 
   // === ENDPOINTS (from Firebase Functions console, v2 run.app) ===
-  static const PLACES_AUTOCOMPLETE_URL = 'https://placesautocomplete-pbe56gqazq-uc.a.run.app';
-  static const PLACE_DETAILS_URL = 'https://placedetails-pbe56gqazq-uc.a.run.app';
+  static const placesAutocompleteUrl =
+      'https://placesautocomplete-pbe56gqazq-uc.a.run.app';
+  static const placeDetailsUrl = 'https://placedetails-pbe56gqazq-uc.a.run.app';
 
   @override
   void dispose() {
@@ -53,9 +52,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
 
   Future<List<AddressSuggestion>> _fetchSuggestions(String q) async {
     if (q.length < _minLen) return [];
-    final uri = Uri.parse(PLACES_AUTOCOMPLETE_URL).replace(queryParameters: {
-      'input': q,
-    });
+    final uri = Uri.parse(
+      placesAutocompleteUrl,
+    ).replace(queryParameters: {'input': q});
     try {
       final res = await http.get(uri).timeout(const Duration(seconds: 8));
       final status = res.statusCode;
@@ -80,15 +79,20 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
         _inlineError = null;
       });
       if (status != 200) {
-        setState(() => _inlineError = 'HTTP $status • Autocomplete unavailable');
+        setState(
+          () => _inlineError = 'HTTP $status • Autocomplete unavailable',
+        );
         return [];
       }
-      return predictions.map((item) {
-        return AddressSuggestion(
-          description: item['description'] ?? '',
-          placeId: item['place_id'] ?? '',
-        );
-      }).where((s) => s.description.isNotEmpty && s.placeId.isNotEmpty).toList();
+      return predictions
+          .map((item) {
+            return AddressSuggestion(
+              description: item['description'] ?? '',
+              placeId: item['place_id'] ?? '',
+            );
+          })
+          .where((s) => s.description.isNotEmpty && s.placeId.isNotEmpty)
+          .toList();
     } catch (e) {
       setState(() {
         _inlineProof = null;
@@ -99,10 +103,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
   }
 
   Future<PlaceLatLng?> _fetchDetails(String placeId) async {
-    final uri = Uri.parse(PLACE_DETAILS_URL).replace(queryParameters: {
-      'place_id': placeId,
-      'fields': 'geometry/location',
-    });
+    final uri = Uri.parse(placeDetailsUrl).replace(
+      queryParameters: {'place_id': placeId, 'fields': 'geometry/location'},
+    );
     try {
       final res = await http.get(uri).timeout(const Duration(seconds: 8));
       final status = res.statusCode;
@@ -112,7 +115,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
         return null;
       }
       final data = jsonDecode(body) as Map<String, dynamic>;
-      final loc = (((data['result'] ?? {})['geometry'] ?? {})['location'] ?? {}) as Map<String, dynamic>;
+      final loc =
+          (((data['result'] ?? {})['geometry'] ?? {})['location'] ?? {})
+              as Map<String, dynamic>;
       final lat = (loc['lat'] as num?)?.toDouble();
       final lng = (loc['lng'] as num?)?.toDouble();
       if (lat != null && lng != null) {
@@ -128,7 +133,9 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
 
   void _select(AddressSuggestion s) async {
     _ctrl.text = s.description;
-    _ctrl.selection = TextSelection.fromPosition(TextPosition(offset: s.description.length));
+    _ctrl.selection = TextSelection.fromPosition(
+      TextPosition(offset: s.description.length),
+    );
     _focus.unfocus();
     setState(() {
       _inlineError = null;
@@ -138,7 +145,8 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
     final latLng = await _fetchDetails(s.placeId);
     if (latLng != null) {
       setState(() {
-        _inlineProof = 'Selected: ${s.description}\nlat: ${latLng.lat}, lng: ${latLng.lng}';
+        _inlineProof =
+            'Selected: ${s.description}\nlat: ${latLng.lat}, lng: ${latLng.lng}';
       });
     }
     widget.onChangedOrSelected(s.description, s.placeId, latLng);
@@ -200,10 +208,7 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
           ),
           emptyBuilder: (context) => const Padding(
             padding: EdgeInsets.all(12),
-            child: Text(
-              'No addresses found',
-              style: TextStyle(fontSize: 12),
-            ),
+            child: Text('No addresses found', style: TextStyle(fontSize: 12)),
           ),
         ), // Added comma here
         if (_inlineError != null)
