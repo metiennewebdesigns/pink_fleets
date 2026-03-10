@@ -11,22 +11,13 @@ import '../features/booking/booking_live_screen.dart';
 final GoRouter riderRouter = GoRouter(
   initialLocation: '/booking',
   routes: [
-    GoRoute(
-      path: '/login',
-      builder: (_, _) => const LoginScreen(),
-    ),
+    GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
     GoRoute(
       path: '/booking',
       builder: (_, _) => const BookingWizardScreen(embedMode: false),
     ),
-    GoRoute(
-      path: '/booking/quote',
-      builder: (_, _) => const QuoteScreen(),
-    ),
-    GoRoute(
-      path: '/portal',
-      builder: (_, _) => const RiderPortalScreen(),
-    ),
+    GoRoute(path: '/booking/quote', builder: (_, _) => const QuoteScreen()),
+    GoRoute(path: '/portal', builder: (_, _) => const RiderPortalScreen()),
 
     /// ✅ Live booking (best)
     /// context.go('/booking/live/$bookingId');
@@ -44,6 +35,9 @@ final GoRouter riderRouter = GoRouter(
       path: '/booking/live',
       builder: (context, state) {
         final bookingId = state.uri.queryParameters['bookingId'];
+        if (bookingId == null || bookingId.isEmpty) {
+          return const BookingWizardScreen(embedMode: false);
+        }
         return BookingLiveScreen(bookingId: bookingId);
       },
     ),

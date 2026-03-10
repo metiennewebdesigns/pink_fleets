@@ -1489,11 +1489,11 @@ async function dispatchNextDriver(bookingId: string) {
   let chosen: EligibleDriver | null = null;
 
   for (const candidate of drivers) {
-    const offerRef = db.collection("booking_offers").doc();
+    const provisionalOfferRef = db.collection("booking_offers").doc();
     const locked = await tryLockDriverForOffer({
       driverId: candidate.uid,
       bookingId,
-      offerId: offerRef.id,
+      offerId: provisionalOfferRef.id,
       expiresAt,
     });
 
@@ -1501,22 +1501,14 @@ async function dispatchNextDriver(bookingId: string) {
       continue;
     }
 
-    await offerRef.set(
-      {
-        bookingId,
-        driverId: candidate.uid,
-        status: "sent" as OfferStatus,
-        attemptNumber: attempt,
-        sentAt: nowTs(),
-        expiresAt,
-        acknowledgedAt: null,
-        respondedAt: null,
-        schemaVersion: 1,
-      },
-      { merge: true }
-    );
+    const createdOffer = await createOffer({
+      bookingId,
+      driverId: candidate.uid,
+      attemptNumber: attempt,
+      expiresAt,
+    });
 
-    offerId = offerRef.id;
+    offerId = createdOffer.offerId;
     chosen = candidate;
     break;
   }
@@ -1779,7 +1771,9 @@ export const respondToOffer = onCall(async (request) => {
   if ((result as any)?.ok && (result as any)?.decision === "declined") {
     try {
       await dispatchNextDriver(String(bookingId));
-    } catch (_) {}
+    } catch (_) {
+      // best-effort re-dispatch
+    }
   }
 
   const actor = callableActorMeta(request);
@@ -1854,7 +1848,9 @@ export const dispatchSweep = onSchedule("every 1 minutes", async () => {
 
     try {
       await dispatchNextDriver(bookingId);
-    } catch (_) {}
+    } catch (_) {
+      // best-effort continue dispatch loop
+    }
   }
 });
 
@@ -1990,7 +1986,7 @@ export const createBookingHttp = onRequest(async (req, res) => {
         status: "dispatching",
         riderId: uid,
         riderUid: uid,
-        riderEmail: bookingRiderEmail,
+        riderEmail: email,
         pickupAddress: pickupAddress ?? null,
         pickupLat: typeof pickupLat === "number" ? pickupLat : null,
         pickupLng: typeof pickupLng === "number" ? pickupLng : null,
@@ -2002,9 +1998,9 @@ export const createBookingHttp = onRequest(async (req, res) => {
         driverId: null,
         riderInfo: {
           uid,
-          email: bookingRiderEmail,
-          name: bookingRiderName,
-          phone: bookingRiderPhone,
+          email,
+          name,
+          phone,
         },
         assigned: {},
         createdAt: nowServer,
