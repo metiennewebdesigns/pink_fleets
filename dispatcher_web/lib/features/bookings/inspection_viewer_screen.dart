@@ -491,17 +491,19 @@ class _PhotoTileState extends State<_PhotoTile> {
   Future<void> _load() async {
     try {
       final bytes = await _fetchBytes(widget.upload);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _bytes = bytes;
           _loading = false;
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = true;
         });
+      }
     }
   }
 

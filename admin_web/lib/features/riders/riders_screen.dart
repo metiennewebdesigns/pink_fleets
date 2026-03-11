@@ -103,10 +103,12 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: ridersQ.snapshots(),
             builder: (context, snap) {
-              if (snap.hasError)
+              if (snap.hasError) {
                 return Center(child: Text('Error:\n${snap.error}'));
-              if (!snap.hasData)
+              }
+              if (!snap.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
 
               var docs = snap.data!.docs;
               if (search.isNotEmpty) {
@@ -269,8 +271,9 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
       stream: bookingsQ.snapshots(),
       builder: (context, snap) {
         if (snap.hasError) return Center(child: Text('Error:\n${snap.error}'));
-        if (!snap.hasData)
+        if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         final docs = snap.data!.docs;
         if (docs.isEmpty) return const Center(child: Text('No riders found.'));
@@ -290,8 +293,9 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
           };
         }
 
-        if (riders.isEmpty)
+        if (riders.isEmpty) {
           return const Center(child: Text('No riders found.'));
+        }
 
         final items = riders.values.toList();
 

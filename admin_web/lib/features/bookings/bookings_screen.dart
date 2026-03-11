@@ -156,8 +156,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             }).toList();
           }
 
-          if (docs.isEmpty)
+          if (docs.isEmpty) {
             return const Center(child: Text('No bookings found.'));
+          }
 
           selectedBookingId ??= docs.first.id;
 
@@ -476,8 +477,9 @@ class _KpiRow extends StatelessWidget {
       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: todayStream,
         builder: (context, snap) {
-          if (!snap.hasData)
+          if (!snap.hasData) {
             return const _KpiCard(title: 'Revenue Today', value: '—');
+          }
           final ids = snap.data!.docs.map((d) => d.id);
           return FutureBuilder<num>(
             future: _sumPrivateTotals(ids),
@@ -493,8 +495,9 @@ class _KpiRow extends StatelessWidget {
       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: monthStream,
         builder: (context, snap) {
-          if (!snap.hasData)
+          if (!snap.hasData) {
             return const _KpiCard(title: 'Revenue Month', value: '—');
+          }
           final ids = snap.data!.docs.map((d) => d.id);
           return FutureBuilder<num>(
             future: _sumPrivateTotals(ids),

@@ -171,12 +171,15 @@ class TripDetail extends ConsumerWidget {
             return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: refDoc.snapshots(),
               builder: (context, snap) {
-                if (snap.hasError)
+                if (snap.hasError) {
                   return Center(child: Text('Error:\n${snap.error}'));
-                if (!snap.hasData)
+                }
+                if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
-                if (!snap.data!.exists)
+                }
+                if (!snap.data!.exists) {
                   return const Center(child: Text('Trip not found'));
+                }
 
                 final d = snap.data!.data()!;
                 final rawStatus = (d['status'] ?? 'unknown').toString();
@@ -302,10 +305,12 @@ class TripDetail extends ConsumerWidget {
                                 final pickupRaw = p['pickupGeo'];
                                 final dropoffRaw = p['dropoffGeo'];
 
-                                if (pickupRaw is GeoPoint)
+                                if (pickupRaw is GeoPoint) {
                                   pickupGeo = pickupRaw;
-                                if (dropoffRaw is GeoPoint)
+                                }
+                                if (dropoffRaw is GeoPoint) {
                                   dropoffGeo = dropoffRaw;
+                                }
 
                                 pickupGeo ??= (() {
                                   final lat =

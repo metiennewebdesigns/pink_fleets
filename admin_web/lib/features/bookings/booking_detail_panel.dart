@@ -104,10 +104,12 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: bookingRef.snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData)
+        if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());
-        if (!snap.data!.exists)
+        }
+        if (!snap.data!.exists) {
           return const Center(child: Text('Booking not found.'));
+        }
 
         final b = snap.data!.data()!;
         final status = (b['status'] ?? 'unknown').toString();
@@ -340,8 +342,9 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 stream: privateRef.snapshots(),
                 builder: (context, ps) {
                   if (!ps.hasData) return const LinearProgressIndicator();
-                  if (!ps.data!.exists)
+                  if (!ps.data!.exists) {
                     return const Text('No private financial record yet.');
+                  }
                   final p = ps.data!.data()!;
                   final payStatus = (p['paymentStatus'] ?? '--').toString();
                   final snapMap = p['pricingSnapshot'] as Map<String, dynamic>?;

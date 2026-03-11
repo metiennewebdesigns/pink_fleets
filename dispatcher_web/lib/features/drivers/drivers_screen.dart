@@ -108,14 +108,17 @@ class DriversScreen extends StatelessWidget {
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: driversRef.snapshots(),
             builder: (context, snap) {
-              if (snap.hasError)
+              if (snap.hasError) {
                 return Center(child: Text('Error:\n${snap.error}'));
-              if (!snap.hasData)
+              }
+              if (!snap.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
 
               final docs = snap.data!.docs;
-              if (docs.isEmpty)
+              if (docs.isEmpty) {
                 return const Center(child: Text('No drivers yet.'));
+              }
 
               docs.sort((a, b) {
                 final ad = a.data();

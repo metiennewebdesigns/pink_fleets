@@ -82,8 +82,9 @@ class _DispatchBookingsScreenState
                     'text'
                   ]) {
                     final nested = v[key];
-                    if (nested is String && nested.trim().isNotEmpty)
+                    if (nested is String && nested.trim().isNotEmpty) {
                       return nested.trim();
+                    }
                   }
                 }
                 return v.toString().trim();
@@ -258,10 +259,12 @@ class _DispatchBookingsScreenState
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: q.snapshots(),
               builder: (context, snap) {
-                if (snap.hasError)
+                if (snap.hasError) {
                   return Center(child: Text('Error:\n${snap.error}'));
-                if (!snap.hasData)
+                }
+                if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
 
                 final allDocs = snap.data!.docs;
                 final docs = filter == 'all'
@@ -270,8 +273,9 @@ class _DispatchBookingsScreenState
                         .where((doc) =>
                             _normStatus(doc.data()['status']) == filter)
                         .toList();
-                if (docs.isEmpty)
+                if (docs.isEmpty) {
                   return const Center(child: Text('No bookings found.'));
+                }
 
                 return ListView.separated(
                   itemCount: docs.length,
@@ -541,10 +545,12 @@ class _DispatchBookingDetailState
         child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: bookingRef.snapshots(),
           builder: (context, snap) {
-            if (!snap.hasData)
+            if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
-            if (!snap.data!.exists)
+            }
+            if (!snap.data!.exists) {
               return const Center(child: Text('Booking not found'));
+            }
 
             final d = snap.data!.data()!;
             final rawStatus = (d['status'] ?? 'unknown').toString();
@@ -695,8 +701,9 @@ class _DispatchBookingDetailState
                                   .doc(driverId!)
                                   .snapshots(),
                               builder: (context, ds) {
-                                if (!ds.hasData)
+                                if (!ds.hasData) {
                                   return const LinearProgressIndicator();
+                                }
                                 final driver = ds.data!.data() ?? {};
                                 final loc = (driver['lastLocation']
                                         as Map<String, dynamic>?) ??
@@ -768,10 +775,12 @@ class _DispatchBookingDetailState
                                         GeoPoint? pickupGeo;
                                         GeoPoint? dropoffGeo;
 
-                                        if (pickupRaw is GeoPoint)
+                                        if (pickupRaw is GeoPoint) {
                                           pickupGeo = pickupRaw;
-                                        if (dropoffRaw is GeoPoint)
+                                        }
+                                        if (dropoffRaw is GeoPoint) {
                                           dropoffGeo = dropoffRaw;
+                                        }
 
                                         pickupGeo ??= (pickupLat != null &&
                                                 pickupLng != null)
@@ -849,8 +858,9 @@ class _DispatchBookingDetailState
                           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                             stream: driversQ.snapshots(),
                             builder: (context, ds) {
-                              if (!ds.hasData)
+                              if (!ds.hasData) {
                                 return const LinearProgressIndicator();
+                              }
                               final docs = ds.data!.docs;
                               return DropdownButtonFormField<String?>(
                                 initialValue: driverId,
@@ -874,8 +884,9 @@ class _DispatchBookingDetailState
                           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                             stream: vehiclesQ.snapshots(),
                             builder: (context, vs) {
-                              if (!vs.hasData)
+                              if (!vs.hasData) {
                                 return const LinearProgressIndicator();
+                              }
                               final docs = vs.data!.docs;
                               return DropdownButtonFormField<String?>(
                                 initialValue: vehicleId,
@@ -996,8 +1007,9 @@ class _DispatchBookingDetailState
                           StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                         stream: settingsRef.snapshots(),
                         builder: (context, ss) {
-                          if (!ss.hasData)
+                          if (!ss.hasData) {
                             return const LinearProgressIndicator();
+                          }
                           final s = ss.data?.data() ?? {};
 
                           final minBookingHours =

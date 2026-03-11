@@ -162,8 +162,9 @@ class AnalyticsScreen extends ConsumerWidget {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: stream,
       builder: (context, snap) {
-        if (!snap.hasData)
+        if (!snap.hasData) {
           return _KpiCard(title: title, value: '—', width: width);
+        }
         final ids = snap.data!.docs.map((d) => d.id);
         return FutureBuilder<num>(
           future: _sumPrivateTotals(db, ids),
