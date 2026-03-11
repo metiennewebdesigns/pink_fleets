@@ -18,15 +18,19 @@ class DriversScreen extends StatelessWidget {
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: driversRef.snapshots(),
           builder: (context, snap) {
-            if (snap.hasError) return Center(child: Text('Error:\n${snap.error}'));
-            if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+            if (snap.hasError)
+              return Center(child: Text('Error:\n${snap.error}'));
+            if (!snap.hasData)
+              return const Center(child: CircularProgressIndicator());
 
             final docs = snap.data!.docs;
             docs.sort((a, b) {
               final ad = a.data();
               final bd = b.data();
-              final aScore = ((ad['approved'] == true) ? 2 : 0) + ((ad['active'] != false) ? 1 : 0);
-              final bScore = ((bd['approved'] == true) ? 2 : 0) + ((bd['active'] != false) ? 1 : 0);
+              final aScore = ((ad['approved'] == true) ? 2 : 0) +
+                  ((ad['active'] != false) ? 1 : 0);
+              final bScore = ((bd['approved'] == true) ? 2 : 0) +
+                  ((bd['active'] != false) ? 1 : 0);
               if (aScore != bScore) return bScore.compareTo(aScore);
               final an = (ad['name'] ?? a.id).toString();
               final bn = (bd['name'] ?? b.id).toString();
@@ -39,20 +43,26 @@ class DriversScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 16),
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: PFColors.white,
                       borderRadius: BorderRadius.circular(18),
-                      border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                      border: const Border.fromBorderSide(
+                          BorderSide(color: PFColors.border)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Drivers', style: Theme.of(context).textTheme.headlineMedium),
+                        Text('Drivers',
+                            style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(height: 6),
                         Text(
                           'Fleet management',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: PFColors.muted),
                         ),
                         const SizedBox(height: 12),
                         Wrap(
@@ -96,7 +106,8 @@ class DriversScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: PFColors.white,
                         borderRadius: BorderRadius.circular(18),
-                        border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                        border: const Border.fromBorderSide(
+                            BorderSide(color: PFColors.border)),
                       ),
                       child: const Text('No drivers yet.'),
                     )
@@ -136,8 +147,14 @@ class DriversScreen extends StatelessWidget {
                                   'It does NOT delete the Auth login account.',
                                 ),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                                  ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                                  TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel')),
+                                  ElevatedButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Delete')),
                                 ],
                               ),
                             );
@@ -165,11 +182,13 @@ class DriversScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.10),
+        color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: c.withOpacity(0.2)),
+        border: Border.all(color: c.withValues(alpha: 0.2)),
       ),
-      child: Text(text, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: c)),
+      child: Text(text,
+          style:
+              TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: c)),
     );
   }
 }
@@ -177,7 +196,9 @@ class DriversScreen extends StatelessWidget {
 class _DriverListCard extends StatelessWidget {
   final QueryDocumentSnapshot<Map<String, dynamic>> doc;
   final bool isCompact;
-  final void Function(String uid, String name, bool approved, bool active, String status) onEdit;
+  final void Function(
+          String uid, String name, bool approved, bool active, String status)
+      onEdit;
   final Future<void> Function(String uid) onDelete;
 
   const _DriverListCard({
@@ -201,7 +222,8 @@ class _DriverListCard extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        DriversScreen._pill(text: approved ? 'APPROVED' : 'PENDING', good: approved),
+        DriversScreen._pill(
+            text: approved ? 'APPROVED' : 'PENDING', good: approved),
         DriversScreen._pill(text: active ? 'ACTIVE' : 'INACTIVE', good: active),
       ],
     );
@@ -231,7 +253,7 @@ class _DriverListCard extends StatelessWidget {
         border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -241,9 +263,12 @@ class _DriverListCard extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                Text(name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 16)),
                 const SizedBox(height: 4),
-                Text('UID: $shortUid • status: $status', style: Theme.of(context).textTheme.bodySmall),
+                Text('UID: $shortUid • status: $status',
+                    style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 10),
                 badges,
                 const SizedBox(height: 8),
@@ -256,9 +281,12 @@ class _DriverListCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      Text(name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 16)),
                       const SizedBox(height: 4),
-                      Text('UID: $shortUid • status: $status', style: Theme.of(context).textTheme.bodySmall),
+                      Text('UID: $shortUid • status: $status',
+                          style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -276,7 +304,8 @@ class _CreateDriverUserDialog extends StatefulWidget {
   const _CreateDriverUserDialog();
 
   @override
-  State<_CreateDriverUserDialog> createState() => _CreateDriverUserDialogState();
+  State<_CreateDriverUserDialog> createState() =>
+      _CreateDriverUserDialogState();
 }
 
 class _CreateDriverUserDialogState extends State<_CreateDriverUserDialog> {
@@ -331,11 +360,18 @@ class _CreateDriverUserDialogState extends State<_CreateDriverUserDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Driver Name')),
+            TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Driver Name')),
             const SizedBox(height: 12),
-            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
+            TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: 'Email')),
             const SizedBox(height: 12),
-            TextField(controller: passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+            TextField(
+                controller: passCtrl,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true),
             if (error != null) ...[
               const SizedBox(height: 12),
               Text(error!, style: const TextStyle(color: Colors.red)),
@@ -344,8 +380,12 @@ class _CreateDriverUserDialogState extends State<_CreateDriverUserDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: loading ? null : () => Navigator.pop(context), child: const Text('Cancel')),
-        ElevatedButton(onPressed: loading ? null : create, child: Text(loading ? 'Creating…' : 'Create')),
+        TextButton(
+            onPressed: loading ? null : () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        ElevatedButton(
+            onPressed: loading ? null : create,
+            child: Text(loading ? 'Creating…' : 'Create')),
       ],
     );
   }
@@ -412,10 +452,13 @@ class _DriverProfileDialogState extends State<_DriverProfileDialog> {
             if (!editing)
               TextField(
                 controller: uidCtrl,
-                decoration: const InputDecoration(labelText: 'Driver UID (from Firebase Auth)'),
+                decoration: const InputDecoration(
+                    labelText: 'Driver UID (from Firebase Auth)'),
               ),
             if (!editing) const SizedBox(height: 12),
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Display Name')),
+            TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Display Name')),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -451,14 +494,18 @@ class _DriverProfileDialogState extends State<_DriverProfileDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
         ElevatedButton(
           onPressed: () async {
             final uid = editing ? widget.initialUid! : uidCtrl.text.trim();
             if (uid.isEmpty) return;
 
             await widget.onSave(uid, {
-              'name': nameCtrl.text.trim().isEmpty ? 'Driver' : nameCtrl.text.trim(),
+              'name': nameCtrl.text.trim().isEmpty
+                  ? 'Driver'
+                  : nameCtrl.text.trim(),
               'approved': approved,
               'active': active,
               'status': status,

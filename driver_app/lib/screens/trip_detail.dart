@@ -18,7 +18,10 @@ import '../shared/web_camera_capture_service.dart';
 import '../shared/date_time_format.dart';
 import '../shared/widgets/live_trip_map.dart';
 import '../services/function_media_upload_service.dart'
-    show kDriverUploadImageEndpoint, kDriverPingEndpoint, kSaveInspectionEndpoint;
+    show
+        kDriverUploadImageEndpoint,
+        kDriverPingEndpoint,
+        kSaveInspectionEndpoint;
 import '../services/media_capture_service.dart';
 import '../services/storage_upload_service.dart';
 import '../shared/open_url.dart';
@@ -55,7 +58,8 @@ class TripDetail extends ConsumerWidget {
     }
   }
 
-  Future<void> _setStatus(DocumentReference<Map<String, dynamic>> ref, String status) async {
+  Future<void> _setStatus(
+      DocumentReference<Map<String, dynamic>> ref, String status) async {
     final snap = await ref.get();
     final currentRaw = (snap.data()?['status'] ?? '').toString();
     final current = currentRaw == 'driver_assigned' ? 'accepted' : currentRaw;
@@ -75,7 +79,8 @@ class TripDetail extends ConsumerWidget {
     await ref.set({
       'status': status,
       'updatedAt': FieldValue.serverTimestamp(),
-      if (status == 'in_progress') 'actualStartAt': FieldValue.serverTimestamp(),
+      if (status == 'in_progress')
+        'actualStartAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -112,18 +117,21 @@ class TripDetail extends ConsumerWidget {
         }
       }
 
-      tx.set(ref, {
-        'status': 'completed',
-        'actualEndAt': Timestamp.fromDate(actualEnd),
-        'overtime': {
-          'graceMinutes': graceMinutes,
-          'ratePerMinute': ratePerMinute,
-          'minutes': overtimeMinutes,
-          'amount': overtimeAmount,
-          'computedAt': FieldValue.serverTimestamp(),
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      tx.set(
+          ref,
+          {
+            'status': 'completed',
+            'actualEndAt': Timestamp.fromDate(actualEnd),
+            'overtime': {
+              'graceMinutes': graceMinutes,
+              'ratePerMinute': ratePerMinute,
+              'minutes': overtimeMinutes,
+              'amount': overtimeAmount,
+              'computedAt': FieldValue.serverTimestamp(),
+            },
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
     });
   }
 
@@ -154,23 +162,31 @@ class TripDetail extends ConsumerWidget {
           stream: settingsRef.snapshots(),
           builder: (context, settingsSnap) {
             final settings = settingsSnap.data?.data() ?? {};
-            final grace = (settings['overtimeGraceMinutes'] as num?)?.toInt() ?? graceMinutes;
-            final rate = (settings['overtimeRatePerMinute'] as num?)?.toDouble() ?? overtimeRatePerMinute;
+            final grace = (settings['overtimeGraceMinutes'] as num?)?.toInt() ??
+                graceMinutes;
+            final rate =
+                (settings['overtimeRatePerMinute'] as num?)?.toDouble() ??
+                    overtimeRatePerMinute;
 
             return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: refDoc.snapshots(),
               builder: (context, snap) {
-                if (snap.hasError) return Center(child: Text('Error:\n${snap.error}'));
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-                if (!snap.data!.exists) return const Center(child: Text('Trip not found'));
+                if (snap.hasError)
+                  return Center(child: Text('Error:\n${snap.error}'));
+                if (!snap.hasData)
+                  return const Center(child: CircularProgressIndicator());
+                if (!snap.data!.exists)
+                  return const Center(child: Text('Trip not found'));
 
                 final d = snap.data!.data()!;
                 final rawStatus = (d['status'] ?? 'unknown').toString();
-                final status = rawStatus == 'driver_assigned' ? 'accepted' : rawStatus;
+                final status =
+                    rawStatus == 'driver_assigned' ? 'accepted' : rawStatus;
                 final c = _statusColor(status);
 
                 final assigned = (d['assigned'] as Map<String, dynamic>?) ?? {};
-                final assignedDriverId = (assigned['driverId'] ?? '').toString();
+                final assignedDriverId =
+                    (assigned['driverId'] ?? '').toString();
 
                 final scheduledEndTs = d['scheduledEndAt'] as Timestamp?;
                 final scheduledEnd = scheduledEndTs?.toDate();
@@ -179,8 +195,15 @@ class TripDetail extends ConsumerWidget {
                 final overtimeMinutes = overtime?['minutes'] ?? 0;
                 final overtimeAmount = overtime?['amount'] ?? 0;
 
-                final steps = const ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'];
-                final currentIndex = steps.indexOf(status).clamp(0, steps.length - 1);
+                final steps = const [
+                  'accepted',
+                  'en_route',
+                  'arrived',
+                  'in_progress',
+                  'completed'
+                ];
+                final currentIndex =
+                    steps.indexOf(status).clamp(0, steps.length - 1);
 
                 final disabled = status == 'completed' || status == 'cancelled';
 
@@ -205,13 +228,16 @@ class TripDetail extends ConsumerWidget {
                                 Container(
                                   width: 12,
                                   height: 12,
-                                  decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+                                  decoration: BoxDecoration(
+                                      color: c, shape: BoxShape.circle),
                                 ),
                                 const SizedBox(width: 10),
                                 Flexible(
                                   child: Text(
                                     'Status: $status',
-                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16),
                                   ),
                                 ),
                               ],
@@ -219,7 +245,9 @@ class TripDetail extends ConsumerWidget {
 
                             final idText = Text(
                               bookingId.substring(0, 8),
-                              style: const TextStyle(color: PFColors.muted, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                  color: PFColors.muted,
+                                  fontWeight: FontWeight.w700),
                             );
 
                             if (isNarrow) {
@@ -260,9 +288,11 @@ class TripDetail extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Live Trip Map', style: TextStyle(fontWeight: FontWeight.w900)),
+                            const Text('Live Trip Map',
+                                style: TextStyle(fontWeight: FontWeight.w900)),
                             const SizedBox(height: 10),
-                            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                            StreamBuilder<
+                                DocumentSnapshot<Map<String, dynamic>>>(
                               stream: bookingPrivateRef.snapshots(),
                               builder: (context, ps) {
                                 final p = ps.data?.data() ?? {};
@@ -272,28 +302,40 @@ class TripDetail extends ConsumerWidget {
                                 final pickupRaw = p['pickupGeo'];
                                 final dropoffRaw = p['dropoffGeo'];
 
-                                if (pickupRaw is GeoPoint) pickupGeo = pickupRaw;
-                                if (dropoffRaw is GeoPoint) dropoffGeo = dropoffRaw;
+                                if (pickupRaw is GeoPoint)
+                                  pickupGeo = pickupRaw;
+                                if (dropoffRaw is GeoPoint)
+                                  dropoffGeo = dropoffRaw;
 
                                 pickupGeo ??= (() {
-                                  final lat = (d['pickupLat'] as num?)?.toDouble();
-                                  final lng = (d['pickupLng'] as num?)?.toDouble();
+                                  final lat =
+                                      (d['pickupLat'] as num?)?.toDouble();
+                                  final lng =
+                                      (d['pickupLng'] as num?)?.toDouble();
                                   if (lat == null || lng == null) return null;
                                   return GeoPoint(lat, lng);
                                 })();
 
                                 dropoffGeo ??= (() {
-                                  final lat = (d['dropoffLat'] as num?)?.toDouble();
-                                  final lng = (d['dropoffLng'] as num?)?.toDouble();
+                                  final lat =
+                                      (d['dropoffLat'] as num?)?.toDouble();
+                                  final lng =
+                                      (d['dropoffLng'] as num?)?.toDouble();
                                   if (lat == null || lng == null) return null;
                                   return GeoPoint(lat, lng);
                                 })();
 
-                                final fallbackLoc = (assigned['driverLocation'] as Map<String, dynamic>?);
-                                final fallbackLat = (fallbackLoc?['lat'] as num?)?.toDouble();
-                                final fallbackLng = (fallbackLoc?['lng'] as num?)?.toDouble();
+                                final fallbackLoc = (assigned['driverLocation']
+                                    as Map<String, dynamic>?);
+                                final fallbackLat =
+                                    (fallbackLoc?['lat'] as num?)?.toDouble();
+                                final fallbackLng =
+                                    (fallbackLoc?['lng'] as num?)?.toDouble();
 
-                                final effectiveDriverId = assignedDriverId.isEmpty ? null : assignedDriverId;
+                                final effectiveDriverId =
+                                    assignedDriverId.isEmpty
+                                        ? null
+                                        : assignedDriverId;
 
                                 return PFUberLiveMap(
                                   driverId: effectiveDriverId,
@@ -325,7 +367,9 @@ class TripDetail extends ConsumerWidget {
                           padding: const EdgeInsets.all(16),
                           child: Text(
                             'Scheduled end: ${formatDateTime(scheduledEnd)}',
-                            style: const TextStyle(color: PFColors.muted, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                color: PFColors.muted,
+                                fontWeight: FontWeight.w600),
                           ),
                         ),
 
@@ -371,7 +415,9 @@ class TripDetail extends ConsumerWidget {
                                     await _setStatus(refDoc, 'en_route');
                                   } catch (e) {
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                              SnackBar(content: Text('$e')));
                                     }
                                   }
                                 },
@@ -385,7 +431,9 @@ class TripDetail extends ConsumerWidget {
                                     await _setStatus(refDoc, 'arrived');
                                   } catch (e) {
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                              SnackBar(content: Text('$e')));
                                     }
                                   }
                                 },
@@ -399,7 +447,9 @@ class TripDetail extends ConsumerWidget {
                                     await _setStatus(refDoc, 'in_progress');
                                   } catch (e) {
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                              SnackBar(content: Text('$e')));
                                     }
                                   }
                                 },
@@ -440,14 +490,19 @@ class TripDetail extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Completion Summary', style: TextStyle(fontWeight: FontWeight.w900)),
+                              const Text('Completion Summary',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w900)),
                               const SizedBox(height: 10),
                               Text('Overtime minutes: $overtimeMinutes'),
-                              Text('Overtime amount: \$${overtimeAmount.toString()}'),
+                              Text(
+                                  'Overtime amount: \$${overtimeAmount.toString()}'),
                               const SizedBox(height: 8),
                               Text(
                                 'Policy: $grace min grace, then \$${rate.toStringAsFixed(2)}/min.',
-                                style: const TextStyle(color: PFColors.muted, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    color: PFColors.muted,
+                                    fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -499,7 +554,9 @@ class _StepperRow extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: done ? PFColors.success.withValues(alpha: 0.14) : PFColors.primarySoft,
+                color: done
+                    ? PFColors.success.withValues(alpha: 0.14)
+                    : PFColors.primarySoft,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: PFColors.border),
               ),
@@ -510,7 +567,9 @@ class _StepperRow extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: done ? PFColors.success : PFColors.muted.withValues(alpha: 0.5),
+                      color: done
+                          ? PFColors.success
+                          : PFColors.muted.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -546,7 +605,9 @@ class _StepperRow extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: done ? PFColors.success : PFColors.muted.withValues(alpha: 0.35),
+                        color: done
+                            ? PFColors.success
+                            : PFColors.muted.withValues(alpha: 0.35),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -670,7 +731,8 @@ class _InspectionStageCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_InspectionStageCard> createState() => _InspectionStageCardState();
+  ConsumerState<_InspectionStageCard> createState() =>
+      _InspectionStageCardState();
 }
 
 class _WebUploadPayload {
@@ -691,9 +753,12 @@ class _WebUploadPayload {
 
 class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
   final TextEditingController _notesCtrl = TextEditingController();
-  final Map<String, bool> _checks = {for (final item in _inspectionItems) item.key: false};
+  final Map<String, bool> _checks = {
+    for (final item in _inspectionItems) item.key: false
+  };
   final MediaCaptureService _mediaCapture = MediaCaptureService();
-  final WebCameraCaptureService _webCameraCaptureService = WebCameraCaptureService();
+  final WebCameraCaptureService _webCameraCaptureService =
+      WebCameraCaptureService();
   final ImageCompressService _imageCompressService = ImageCompressService();
   final StorageUploadService _uploadService = StorageUploadService();
   bool _initialized = false;
@@ -807,9 +872,12 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
       }),
     );
     final decoded = jsonDecode(response.body);
-    final data = decoded is Map ? Map<String, dynamic>.from(decoded) : <String, dynamic>{};
+    final data = decoded is Map
+        ? Map<String, dynamic>.from(decoded)
+        : <String, dynamic>{};
     if (response.statusCode != 200 || data['ok'] != true) {
-      throw Exception(data['error']?.toString() ?? 'save-failed (${response.statusCode})');
+      throw Exception(
+          data['error']?.toString() ?? 'save-failed (${response.statusCode})');
     }
   }
 
@@ -835,7 +903,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
       if (mounted) {
         setState(() => _notesSaved = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved ✅'), duration: Duration(seconds: 2)),
+          const SnackBar(
+              content: Text('Saved ✅'), duration: Duration(seconds: 2)),
         );
       }
     } catch (e) {
@@ -906,7 +975,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
           final msg = event.error ?? 'Upload failed. Please try again.';
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(msg)));
           });
         }
       });
@@ -949,7 +1019,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
   void _showCaptureDiagnostics(WebCaptureDiagnostics diagnostics) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Capture diagnostics:\n${diagnostics.toHumanText()}')),
+      SnackBar(
+          content: Text('Capture diagnostics:\n${diagnostics.toHumanText()}')),
     );
   }
 
@@ -993,7 +1064,9 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
       );
 
       final decoded = jsonDecode(response.body);
-      final data = decoded is Map ? Map<String, dynamic>.from(decoded) : <String, dynamic>{};
+      final data = decoded is Map
+          ? Map<String, dynamic>.from(decoded)
+          : <String, dynamic>{};
       if (response.statusCode != 200) {
         throw Exception(data['error']?.toString() ?? response.body);
       }
@@ -1003,10 +1076,12 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
 
       final downloadUrl = (data['downloadUrl'] ?? '').toString();
       final storagePath = (data['storagePath'] ?? '').toString();
-      final sizeBytes = (data['sizeBytes'] as num?)?.toInt() ?? payload.bytes.lengthInBytes;
+      final sizeBytes =
+          (data['sizeBytes'] as num?)?.toInt() ?? payload.bytes.lengthInBytes;
 
       if (downloadUrl.isEmpty || storagePath.isEmpty) {
-        throw Exception('uploadInspectionImageHttp returned invalid payload: $data');
+        throw Exception(
+            'uploadInspectionImageHttp returned invalid payload: $data');
       }
 
       // Build local-only upload map for immediate UI update.
@@ -1061,12 +1136,14 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
 
   Future<void> _takePictureWeb(FirebaseFirestore db, String? driverId) async {
     final preferCamera = _webNullCaptureCount < 2;
-    final capture = await _webCameraCaptureService.capturePhoto(preferCamera: preferCamera);
+    final capture =
+        await _webCameraCaptureService.capturePhoto(preferCamera: preferCamera);
 
     if (capture == null) {
       if (kDebugUploads && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Capture cancelled (Safari returned no file)')),
+          const SnackBar(
+              content: Text('Capture cancelled (Safari returned no file)')),
         );
       }
       return;
@@ -1081,7 +1158,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
         final msg = _webNullCaptureCount >= 2
             ? 'Capture cancelled (Safari returned no file). Falling back to photo library chooser.'
             : 'Capture cancelled (Safari returned no file).';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
       return;
     }
@@ -1163,7 +1241,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
           ? 5 * 1024 * 1024 // 5 MB (base64 expands payload)
           : 50 * 1024 * 1024; // 50 MB native
       if (media.sizeBytes > maxImageBytes) {
-        throw Exception('Image too large. Max ${kIsWeb ? '5MB (web)' : '50MB'}.');
+        throw Exception(
+            'Image too large. Max ${kIsWeb ? '5MB (web)' : '50MB'}.');
       }
 
       await _startUpload(db, driverId, media: media, type: 'photo');
@@ -1260,7 +1339,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
 
       // Notify dispatchers (non-fatal on all platforms).
       try {
-        final fn = FirebaseFunctions.instance.httpsCallable('notifyDispatchers');
+        final fn =
+            FirebaseFunctions.instance.httpsCallable('notifyDispatchers');
         await fn.call({
           'bookingId': widget.bookingId,
           'stage': widget.stage,
@@ -1325,7 +1405,11 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
         final uploadsOk = uploads.isNotEmpty &&
             uploads.every((u) =>
                 (u['url'] ?? u['downloadUrl'] ?? '').toString().isNotEmpty);
-        final canSend = !_sending && !sentToDispatcher && checklistOk && _notesSaved && uploadsOk;
+        final canSend = !_sending &&
+            !sentToDispatcher &&
+            checklistOk &&
+            _notesSaved &&
+            uploadsOk;
 
         return Container(
           decoration: BoxDecoration(
@@ -1342,11 +1426,15 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                   Expanded(
                     child: Text(
                       widget.title,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900, fontSize: 16),
                     ),
                   ),
                   if (_saving || _uploading || _sending)
-                    const SizedBox(width: 16, height: 16, child: CircularProgressIndicator()),
+                    const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator()),
                 ],
               ),
               if (_uploading && _uploadProgress != null) ...[
@@ -1364,7 +1452,9 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                   _uploadStatusText!,
                   style: TextStyle(
                     fontSize: 12,
-                    color: _uploadError == null ? PFColors.success : PFColors.danger,
+                    color: _uploadError == null
+                        ? PFColors.success
+                        : PFColors.danger,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1377,13 +1467,15 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                 ),
                 const SizedBox(height: 6),
                 OutlinedButton.icon(
-                  onPressed: _uploading ? null : () => _retryLastUpload(db, driverId),
+                  onPressed:
+                      _uploading ? null : () => _retryLastUpload(db, driverId),
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry upload'),
                 ),
               ],
               const SizedBox(height: 10),
-              const Text('Checklist', style: TextStyle(fontWeight: FontWeight.w800)),
+              const Text('Checklist',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
               ..._inspectionItems.map((item) {
                 final v = _checks[item.key] ?? false;
@@ -1391,7 +1483,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: v,
-                  onChanged: (val) => setState(() => _checks[item.key] = val ?? false),
+                  onChanged: (val) =>
+                      setState(() => _checks[item.key] = val ?? false),
                   title: Text(item.label),
                 );
               }),
@@ -1400,7 +1493,8 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                 controller: _notesCtrl,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Notes / walk-around notes'),
+                decoration: const InputDecoration(
+                    labelText: 'Notes / walk-around notes'),
               ),
               const SizedBox(height: 10),
               SizedBox(
@@ -1430,20 +1524,24 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: _sending || _uploading ? null : () => _recordVideo(db, driverId),
+                      onPressed: _sending || _uploading
+                          ? null
+                          : () => _recordVideo(db, driverId),
                       icon: const Icon(Icons.videocam),
                       label: const Text('Record Video'),
                     ),
                   ),
                 ],
               ),
-              if (kDebugMode && kIsWeb) ...[                const SizedBox(height: 8),
+              if (kDebugMode && kIsWeb) ...[
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: _uploading ? null : _runWebCallableTestCall,
                     icon: const Icon(Icons.science_outlined),
-                    label: const Text('TEST CALL: uploadInspectionImage (AA==)'),
+                    label:
+                        const Text('TEST CALL: uploadInspectionImage (AA==)'),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1452,8 +1550,10 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                   child: OutlinedButton.icon(
                     onPressed: () async {
                       try {
-                        final resp = await http.get(Uri.parse(kDriverPingEndpoint));
-                        await _showErrorDialog('PING result (${resp.statusCode})', resp.body);
+                        final resp =
+                            await http.get(Uri.parse(kDriverPingEndpoint));
+                        await _showErrorDialog(
+                            'PING result (${resp.statusCode})', resp.body);
                       } catch (e) {
                         await _showErrorDialog('PING error', e.toString());
                       }
@@ -1475,20 +1575,29 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Send requirements:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11)),
+                      const Text('Send requirements:',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 11)),
                       Text(
                         'checklistComplete: $checklistOk',
-                        style: TextStyle(fontSize: 11, color: checklistOk ? Colors.green : Colors.red),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: checklistOk ? Colors.green : Colors.red),
                       ),
                       Text(
                         'notesSaved: $_notesSaved',
-                        style: TextStyle(fontSize: 11, color: _notesSaved ? Colors.green : Colors.red),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: _notesSaved ? Colors.green : Colors.red),
                       ),
                       Text(
                         'uploadsCount: ${uploads.length} (need ≥ 1)',
-                        style: TextStyle(fontSize: 11, color: uploadsOk ? Colors.green : Colors.red),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: uploadsOk ? Colors.green : Colors.red),
                       ),
-                      Text('alreadySent: $sentToDispatcher', style: const TextStyle(fontSize: 11)),
+                      Text('alreadySent: $sentToDispatcher',
+                          style: const TextStyle(fontSize: 11)),
                     ],
                   ),
                 ),
@@ -1508,18 +1617,21 @@ class _InspectionStageCardState extends ConsumerState<_InspectionStageCard> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: canSend ? () => _sendToDispatcher(db, driverId) : null,
+                  onPressed:
+                      canSend ? () => _sendToDispatcher(db, driverId) : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PFColors.primary,
                     foregroundColor: PFColors.white,
                   ),
                   icon: const Icon(Icons.send),
-                  label: Text(sentToDispatcher ? 'Sent ✅' : 'Send to Dispatcher'),
+                  label:
+                      Text(sentToDispatcher ? 'Sent ✅' : 'Send to Dispatcher'),
                 ),
               ),
               if (uploads.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text('Uploads', style: TextStyle(fontWeight: FontWeight.w800)),
+                const Text('Uploads',
+                    style: TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 ...uploads.map((u) {
                   final name = (u['name'] ?? 'Photo').toString();
@@ -1575,7 +1687,10 @@ class _SendRequirementsPanel extends StatelessWidget {
         children: [
           const Text(
             'Required before sending:',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: PFColors.inkSoft),
+            style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                color: PFColors.inkSoft),
           ),
           const SizedBox(height: 4),
           _Req(label: 'All checklist items checked', met: checklistOk),
@@ -1708,14 +1823,17 @@ class _UploadPreviewCardState extends State<_UploadPreviewCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(widget.name,
+              style: const TextStyle(fontWeight: FontWeight.w700)),
           if (_sizeLabel.isNotEmpty) ...[
             const SizedBox(height: 2),
-            Text(_sizeLabel, style: const TextStyle(fontSize: 11, color: PFColors.muted)),
+            Text(_sizeLabel,
+                style: const TextStyle(fontSize: 11, color: PFColors.muted)),
           ],
           const SizedBox(height: 8),
           if (widget.url.isEmpty)
-            const Text('File unavailable', style: TextStyle(color: PFColors.muted, fontSize: 12))
+            const Text('File unavailable',
+                style: TextStyle(color: PFColors.muted, fontSize: 12))
           else if (_isImage)
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -1735,13 +1853,15 @@ class _UploadPreviewCardState extends State<_UploadPreviewCard> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: widget.url.isNotEmpty ? () => openUrl(widget.url) : null,
+                  onPressed:
+                      widget.url.isNotEmpty ? () => openUrl(widget.url) : null,
                   icon: const Icon(Icons.open_in_new, size: 16),
                   label: const Text('Open video'),
                 ),
                 const SizedBox(width: 8),
                 TextButton.icon(
-                  onPressed: widget.url.isNotEmpty ? () => openUrl(widget.url) : null,
+                  onPressed:
+                      widget.url.isNotEmpty ? () => openUrl(widget.url) : null,
                   icon: const Icon(Icons.download, size: 16),
                   label: const Text('Download'),
                 ),
@@ -1825,10 +1945,10 @@ class _AdjustmentsFormState extends State<_AdjustmentsForm> {
   void _hydrate(Map<String, dynamic> adj) {
     if (_hydrated) return;
     _hydrated = true;
-    _fuelCtrl.text =
-        ((adj['fuelSurchargePct'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(1);
-    _parkingCtrl.text =
-        (((adj['parkingCents'] as num?)?.toInt() ?? 0) / 100).toStringAsFixed(2);
+    _fuelCtrl.text = ((adj['fuelSurchargePct'] as num?)?.toDouble() ?? 0.0)
+        .toStringAsFixed(1);
+    _parkingCtrl.text = (((adj['parkingCents'] as num?)?.toInt() ?? 0) / 100)
+        .toStringAsFixed(2);
     _tollsCtrl.text =
         (((adj['tollsCents'] as num?)?.toInt() ?? 0) / 100).toStringAsFixed(2);
     _venueCtrl.text =
@@ -1894,8 +2014,9 @@ class _AdjustmentsFormState extends State<_AdjustmentsForm> {
                 as Map<String, dynamic>?) ??
             {};
         if (!_hydrated && adj.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback(
-              (_) { if (mounted) setState(() => _hydrate(adj)); });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _hydrate(adj));
+          });
         }
         final byRole = (adj['addedByRole'] ?? '').toString();
         return Container(
@@ -1911,11 +2032,13 @@ class _AdjustmentsFormState extends State<_AdjustmentsForm> {
               const Text('Adjustments / Surcharges',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
               const SizedBox(height: 2),
-              const Text('Staff only — saved to bookings\_private',
+              const Text('Staff only — saved to bookings_private',
                   style: TextStyle(color: PFColors.muted, fontSize: 12)),
-              if (byRole.isNotEmpty) ...[const SizedBox(height: 4),
+              if (byRole.isNotEmpty) ...[
+                const SizedBox(height: 4),
                 Text('Last saved by: $byRole',
-                    style: const TextStyle(color: PFColors.muted, fontSize: 11))],
+                    style: const TextStyle(color: PFColors.muted, fontSize: 11))
+              ],
               const SizedBox(height: 14),
               Row(children: [
                 Expanded(

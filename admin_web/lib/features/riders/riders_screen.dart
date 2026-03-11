@@ -34,7 +34,8 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
   @override
   Widget build(BuildContext context) {
     final db = ref.watch(firestoreProvider);
-    final ridersQ = db.collection('riders').orderBy('createdAt', descending: true);
+    final ridersQ =
+        db.collection('riders').orderBy('createdAt', descending: true);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -44,7 +45,8 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
           decoration: BoxDecoration(
             color: PFColors.white,
             borderRadius: BorderRadius.circular(18),
-            border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+            border:
+                const Border.fromBorderSide(BorderSide(color: PFColors.border)),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -61,11 +63,15 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Riders', style: Theme.of(context).textTheme.headlineMedium),
+                    Text('Riders',
+                        style: Theme.of(context).textTheme.headlineMedium),
                     const SizedBox(height: 6),
                     Text(
                       'Customer directory',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: PFColors.muted),
                     ),
                     const SizedBox(height: 12),
                     searchField,
@@ -75,11 +81,15 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
 
               return Row(
                 children: [
-                  Text('Riders', style: Theme.of(context).textTheme.headlineMedium),
+                  Text('Riders',
+                      style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(width: 12),
                   Text(
                     'Customer directory',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: PFColors.muted),
                   ),
                   const Spacer(),
                   SizedBox(width: 320, child: searchField),
@@ -93,8 +103,10 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: ridersQ.snapshots(),
             builder: (context, snap) {
-              if (snap.hasError) return Center(child: Text('Error:\n${snap.error}'));
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+              if (snap.hasError)
+                return Center(child: Text('Error:\n${snap.error}'));
+              if (!snap.hasData)
+                return const Center(child: CircularProgressIndicator());
 
               var docs = snap.data!.docs;
               if (search.isNotEmpty) {
@@ -105,7 +117,10 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
                   final email = (d['email'] ?? '').toString().toLowerCase();
                   final phone = (d['phone'] ?? '').toString().toLowerCase();
                   final dob = formatTimestamp(d['dob']).toLowerCase();
-                  return name.contains(s) || email.contains(s) || phone.contains(s) || dob.contains(s);
+                  return name.contains(s) ||
+                      email.contains(s) ||
+                      phone.contains(s) ||
+                      dob.contains(s);
                 }).toList();
               }
 
@@ -130,30 +145,37 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
                     decoration: BoxDecoration(
                       color: PFColors.white,
                       borderRadius: BorderRadius.circular(18),
-                      border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                      border: const Border.fromBorderSide(
+                          BorderSide(color: PFColors.border)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 18,
                           offset: const Offset(0, 10),
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final narrow = constraints.maxWidth < 560;
                         final createdBlock = Column(
-                          crossAxisAlignment: narrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                          crossAxisAlignment: narrow
+                              ? CrossAxisAlignment.start
+                              : CrossAxisAlignment.end,
                           children: [
                             Text(
                               'Created',
-                              style: TextStyle(color: PFColors.muted.withOpacity(0.9), fontSize: 12),
+                              style: TextStyle(
+                                  color: PFColors.muted.withValues(alpha: 0.9),
+                                  fontSize: 12),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               formatTimestamp(createdAt),
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 12),
                             ),
                           ],
                         );
@@ -161,13 +183,18 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
                         final mainInfo = Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Text(name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800)),
                             const SizedBox(height: 4),
-                            Text(email, style: const TextStyle(color: PFColors.muted)),
+                            Text(email,
+                                style: const TextStyle(color: PFColors.muted)),
                             const SizedBox(height: 2),
-                            Text(phone, style: const TextStyle(color: PFColors.muted)),
+                            Text(phone,
+                                style: const TextStyle(color: PFColors.muted)),
                             const SizedBox(height: 2),
-                            Text('DOB: $dob', style: const TextStyle(color: PFColors.muted)),
+                            Text('DOB: $dob',
+                                style: const TextStyle(color: PFColors.muted)),
                           ],
                         );
 
@@ -178,10 +205,15 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
                               Row(
                                 children: [
                                   CircleAvatar(
-                                    backgroundColor: PFColors.gold.withOpacity(0.15),
+                                    backgroundColor:
+                                        PFColors.gold.withValues(alpha: 0.15),
                                     child: Text(
-                                      name.isNotEmpty ? name[0].toUpperCase() : 'R',
-                                      style: const TextStyle(fontWeight: FontWeight.w900, color: PFColors.ink),
+                                      name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : 'R',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          color: PFColors.ink),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -197,10 +229,13 @@ class _RidersScreenState extends ConsumerState<RidersScreen> {
                         return Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: PFColors.gold.withOpacity(0.15),
+                              backgroundColor:
+                                  PFColors.gold.withValues(alpha: 0.15),
                               child: Text(
                                 name.isNotEmpty ? name[0].toUpperCase() : 'R',
-                                style: const TextStyle(fontWeight: FontWeight.w900, color: PFColors.ink),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    color: PFColors.ink),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -227,13 +262,15 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(firestoreProvider);
-    final bookingsQ = db.collection('bookings').orderBy('createdAt', descending: true);
+    final bookingsQ =
+        db.collection('bookings').orderBy('createdAt', descending: true);
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: bookingsQ.snapshots(),
       builder: (context, snap) {
         if (snap.hasError) return Center(child: Text('Error:\n${snap.error}'));
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
 
         final docs = snap.data!.docs;
         if (docs.isEmpty) return const Center(child: Text('No riders found.'));
@@ -253,7 +290,8 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
           };
         }
 
-        if (riders.isEmpty) return const Center(child: Text('No riders found.'));
+        if (riders.isEmpty)
+          return const Center(child: Text('No riders found.'));
 
         final items = riders.values.toList();
 
@@ -272,10 +310,11 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: PFColors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                border: const Border.fromBorderSide(
+                    BorderSide(color: PFColors.border)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 18,
                     offset: const Offset(0, 10),
                   ),
@@ -285,10 +324,11 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: PFColors.gold.withOpacity(0.15),
+                    backgroundColor: PFColors.gold.withValues(alpha: 0.15),
                     child: Text(
                       name.isNotEmpty ? name[0].toUpperCase() : 'R',
-                      style: const TextStyle(fontWeight: FontWeight.w900, color: PFColors.ink),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900, color: PFColors.ink),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -296,13 +336,18 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                        Text(name,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 4),
-                        Text(email, style: const TextStyle(color: PFColors.muted)),
+                        Text(email,
+                            style: const TextStyle(color: PFColors.muted)),
                         const SizedBox(height: 2),
-                        Text(phone, style: const TextStyle(color: PFColors.muted)),
+                        Text(phone,
+                            style: const TextStyle(color: PFColors.muted)),
                         const SizedBox(height: 2),
-                        Text('DOB: $dob', style: const TextStyle(color: PFColors.muted)),
+                        Text('DOB: $dob',
+                            style: const TextStyle(color: PFColors.muted)),
                       ],
                     ),
                   ),
@@ -311,12 +356,15 @@ class _RiderFallbackFromBookings extends ConsumerWidget {
                     children: [
                       Text(
                         'Created',
-                        style: TextStyle(color: PFColors.muted.withOpacity(0.9), fontSize: 12),
+                        style: TextStyle(
+                            color: PFColors.muted.withValues(alpha: 0.9),
+                            fontSize: 12),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         formatTimestamp(createdAt),
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 12),
                       ),
                     ],
                   ),

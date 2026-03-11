@@ -8,7 +8,8 @@ import '../../theme/pink_fleets_theme.dart';
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
 
-  Future<num> _sumPrivateTotals(FirebaseFirestore db, Iterable<String> bookingIds) async {
+  Future<num> _sumPrivateTotals(
+      FirebaseFirestore db, Iterable<String> bookingIds) async {
     num sum = 0;
     for (final id in bookingIds) {
       final doc = await db.collection('bookings_private').doc(id).get();
@@ -32,23 +33,28 @@ class AnalyticsScreen extends ConsumerWidget {
 
     final todayStream = db
         .collection('bookings')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .snapshots();
 
     final monthStream = db
         .collection('bookings')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
         .snapshots();
 
     final yearStream = db
         .collection('bookings')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear))
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear))
         .snapshots();
 
-    final activeStream = db
-        .collection('bookings')
-        .where('status', whereIn: ['driver_assigned', 'en_route', 'arrived', 'in_progress'])
-        .snapshots();
+    final activeStream = db.collection('bookings').where('status', whereIn: [
+      'driver_assigned',
+      'en_route',
+      'arrived',
+      'in_progress'
+    ]).snapshots();
 
     final driversOnlineStream = db
         .collection('drivers')
@@ -62,15 +68,20 @@ class AnalyticsScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: PFColors.white,
             borderRadius: BorderRadius.circular(18),
-            border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+            border:
+                const Border.fromBorderSide(BorderSide(color: PFColors.border)),
           ),
           child: Row(
             children: [
-              Text('Analytics', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Analytics',
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(width: 12),
               Text(
                 'Executive overview',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: PFColors.muted),
               ),
             ],
           ),
@@ -113,11 +124,14 @@ class AnalyticsScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _revenueCard(db, todayStream, 'Revenue Today', isNarrow ? double.infinity : 220),
+        _revenueCard(
+            db, todayStream, 'Revenue Today', isNarrow ? double.infinity : 220),
         const SizedBox(height: 12),
-        _revenueCard(db, monthStream, 'Revenue This Month', isNarrow ? double.infinity : 220),
+        _revenueCard(db, monthStream, 'Revenue This Month',
+            isNarrow ? double.infinity : 220),
         const SizedBox(height: 12),
-        _revenueCard(db, yearStream, 'Revenue This Year', isNarrow ? double.infinity : 220),
+        _revenueCard(db, yearStream, 'Revenue This Year',
+            isNarrow ? double.infinity : 220),
       ],
     );
   }
@@ -125,7 +139,9 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget _kpiStream({
     required String title,
     required Stream<QuerySnapshot<Map<String, dynamic>>> stream,
-    required String Function(AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snap) valueBuilder,
+    required String Function(
+            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snap)
+        valueBuilder,
     required double width,
   }) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -146,13 +162,17 @@ class AnalyticsScreen extends ConsumerWidget {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: stream,
       builder: (context, snap) {
-        if (!snap.hasData) return _KpiCard(title: title, value: '—', width: width);
+        if (!snap.hasData)
+          return _KpiCard(title: title, value: '—', width: width);
         final ids = snap.data!.docs.map((d) => d.id);
         return FutureBuilder<num>(
           future: _sumPrivateTotals(db, ids),
           builder: (context, s) {
             final total = s.data ?? 0;
-            return _KpiCard(title: title, value: '\$${total.toStringAsFixed(0)}', width: width);
+            return _KpiCard(
+                title: title,
+                value: '\$${total.toStringAsFixed(0)}',
+                width: width);
           },
         );
       },
@@ -165,7 +185,8 @@ class _KpiCard extends StatelessWidget {
   final String value;
   final double width;
 
-  const _KpiCard({required this.title, required this.value, required this.width});
+  const _KpiCard(
+      {required this.title, required this.value, required this.width});
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +199,7 @@ class _KpiCard extends StatelessWidget {
         border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -187,15 +208,23 @@ class _KpiCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: PFColors.muted, fontWeight: FontWeight.w700, fontSize: 12)),
+          Text(title,
+              style: const TextStyle(
+                  color: PFColors.muted,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12)),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: PFColors.ink)),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  color: PFColors.ink)),
           const SizedBox(height: 6),
           Container(
             height: 4,
             width: 42,
             decoration: BoxDecoration(
-              color: PFColors.gold.withOpacity(0.6),
+              color: PFColors.gold.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(999),
             ),
           ),

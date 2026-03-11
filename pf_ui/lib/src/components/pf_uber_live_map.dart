@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_field, deprecated_member_use
+
 import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
@@ -42,8 +44,7 @@ bool _mapsJsPresent() {
 bool _mapsReadyFlag() {
   if (!kIsWeb) return true;
   try {
-    final ready =
-        globalContext.getProperty<JSBoolean?>('__pfMapsReady'.toJS);
+    final ready = globalContext.getProperty<JSBoolean?>('__pfMapsReady'.toJS);
     return ready?.toDart ?? false;
   } catch (_) {
     return false;
@@ -56,7 +57,8 @@ bool _initMapJs() {
     globalContext.callMethod('initMap'.toJS);
     return true;
   } catch (e, st) {
-    print('[PF MAP] MAP INIT FAILED — likely browser key / referrer / billing issue');
+    print(
+        '[PF MAP] MAP INIT FAILED — likely browser key / referrer / billing issue');
     print('[PF MAP] initMap bridge threw: $e');
     print(st.toString());
     return false;
@@ -220,8 +222,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
       setState(() => _driver = widget.initialDriverLatLng);
     }
     if (kIsWeb) _ensureWebMapView();
-    final coordsChanged =
-        old.pickupGeo != widget.pickupGeo ||
+    final coordsChanged = old.pickupGeo != widget.pickupGeo ||
         old.dropoffGeo != widget.dropoffGeo ||
         old.initialDriverLatLng != widget.initialDriverLatLng;
     if (coordsChanged) {
@@ -288,7 +289,8 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
   }
 
   void _failMapInit(Object error, [StackTrace? stackTrace]) {
-    print('[PF MAP] MAP INIT FAILED — likely browser key / referrer / billing issue');
+    print(
+        '[PF MAP] MAP INIT FAILED — likely browser key / referrer / billing issue');
     print('[PF MAP] init error: $error');
     if (stackTrace != null) {
       print(stackTrace.toString());
@@ -490,8 +492,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
       return;
     }
     if (_driver != null && _controller != null) {
-      await _controller!
-          .animateCamera(CameraUpdate.newLatLng(_driver!));
+      await _controller!.animateCamera(CameraUpdate.newLatLng(_driver!));
     } else {
       await _fitBounds();
     }
@@ -516,8 +517,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
   JSObject? _mapDomElement() {
     final doc = _documentObject();
     if (doc == null) return null;
-    final el =
-        doc.callMethod<JSAny?>('getElementById'.toJS, _webMapDomId.toJS);
+    final el = doc.callMethod<JSAny?>('getElementById'.toJS, _webMapDomId.toJS);
     return el is JSObject ? el : null;
   }
 
@@ -549,7 +549,8 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
 
   void _registerWebMapView() {
     if (!kIsWeb || _webViewRegistered) return;
-    _webFrameObj = pf_platform_view.registerPfUberMapViewFactory(_webViewType, _webMapDomId);
+    _webFrameObj = pf_platform_view.registerPfUberMapViewFactory(
+        _webViewType, _webMapDomId);
     _webViewRegistered = true;
   }
 
@@ -697,8 +698,9 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
       _webDriverMarker = _upsertWebMarker(
         current: _webDriverMarker,
         position: _driver,
-        title:
-            (widget.driverName?.isNotEmpty ?? false) ? widget.driverName! : 'Driver',
+        title: (widget.driverName?.isNotEmpty ?? false)
+            ? widget.driverName!
+            : 'Driver',
         zIndex: 10,
       );
       _webPickupMarker = _upsertWebMarker(
@@ -792,21 +794,21 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
           const Spacer(),
           SizedBox(
             width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  debugPrint('[LIVE BOOKING] retry map');
-                  setState(() {
-                    _showFallback = false;
-                    _mapFailed = false;
-                    _mapReady = false;
-                    _mapLoading = true;
-                    _mapInitStarted = false;
-                    _mapLoaded = false;
-                    _mapRetryCount++;
-                  });
-                  _safeInitMap();
-                  _scheduleMapRecoveryRetry();
-                },
+            child: OutlinedButton.icon(
+              onPressed: () {
+                debugPrint('[LIVE BOOKING] retry map');
+                setState(() {
+                  _showFallback = false;
+                  _mapFailed = false;
+                  _mapReady = false;
+                  _mapLoading = true;
+                  _mapInitStarted = false;
+                  _mapLoaded = false;
+                  _mapRetryCount++;
+                });
+                _safeInitMap();
+                _scheduleMapRecoveryRetry();
+              },
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Retry map'),
               style: OutlinedButton.styleFrom(
@@ -826,8 +828,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
           Icon(icon, color: PFColors.primary, size: 14),
           const SizedBox(width: 6),
           Text('$label: ',
-              style:
-                  const TextStyle(color: PFColors.muted, fontSize: 12)),
+              style: const TextStyle(color: PFColors.muted, fontSize: 12)),
           Expanded(
             child: Text(value,
                 style: const TextStyle(
@@ -856,8 +857,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
       right: 54, // leave room for recenter FAB
       bottom: 10,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.82),
           borderRadius: BorderRadius.circular(12),
@@ -888,8 +888,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
                     [widget.vehicleLabel, widget.licensePlate]
                         .where((s) => s?.isNotEmpty ?? false)
                         .join(' · '),
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 11),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
                   ),
                 if (widget.bookingStatus?.isNotEmpty ?? false)
                   Padding(
@@ -902,8 +901,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
           if (widget.etaText?.isNotEmpty ?? false) ...[
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 9, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
                 color: PFColors.primarySoft,
                 borderRadius: BorderRadius.circular(7),
@@ -944,8 +942,8 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
           markerId: const MarkerId('pf_pickup'),
           position: _pickup!,
           infoWindow: const InfoWindow(title: 'Pickup'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueGreen),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
           zIndex: 5,
         ),
       if (_dropoff != null)
@@ -953,8 +951,8 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
           markerId: const MarkerId('pf_dropoff'),
           position: _dropoff!,
           infoWindow: const InfoWindow(title: 'Dropoff'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueYellow),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
           zIndex: 5,
         ),
     };
@@ -1063,8 +1061,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
           // ── Map ───────────────────────────────────────────────────────────
           Positioned.fill(
             child: ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(widget.borderRadius),
+              borderRadius: BorderRadius.circular(widget.borderRadius),
               child: kIsWeb
                   ? (_webViewRegistered
                       ? HtmlElementView(viewType: _webViewType)
@@ -1073,56 +1070,60 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
                           defaultTargetPlatform == TargetPlatform.iOS)
                       ? Builder(
                           builder: (context) {
-                            final initialTarget =
-                                _driver ?? _pickup ?? _dropoff ?? const LatLng(29.9511, -90.0715);
+                            final initialTarget = _driver ??
+                                _pickup ??
+                                _dropoff ??
+                                const LatLng(29.9511, -90.0715);
                             try {
                               return GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                                target: initialTarget, zoom: 13.5),
-                            markers: _markers,
-                            myLocationButtonEnabled: false,
-                            zoomControlsEnabled: false,
-                            compassEnabled: false,
-                            mapToolbarEnabled: false,
-                            onMapCreated: (c) async {
-                              try {
-                                _controller = c;
-                                debugPrint('[LIVE BOOKING] map init success');
+                                initialCameraPosition: CameraPosition(
+                                    target: initialTarget, zoom: 13.5),
+                                markers: _markers,
+                                myLocationButtonEnabled: false,
+                                zoomControlsEnabled: false,
+                                compassEnabled: false,
+                                mapToolbarEnabled: false,
+                                onMapCreated: (c) async {
+                                  try {
+                                    _controller = c;
+                                    debugPrint(
+                                        '[LIVE BOOKING] map init success');
+                                    if (mounted) {
+                                      _mapRecoveryTimer?.cancel();
+                                      setState(() {
+                                        _mapLoaded = true;
+                                        _mapReady = true;
+                                        _mapLoading = false;
+                                        _mapFailed = false;
+                                        _showFallback = false;
+                                        _mapInitStarted = false;
+                                      });
+                                    } else {
+                                      _mapLoaded = true;
+                                    }
+                                    _fallbackTimer?.cancel();
+                                    if (!_didInitialFit) {
+                                      await _fitBounds();
+                                      _didInitialFit = true;
+                                    }
+                                  } catch (e, st) {
+                                    _failMapInit(e, st);
+                                  }
+                                },
+                                onCameraMoveStarted: () {
+                                  if (_autoFollow)
+                                    setState(() => _autoFollow = false);
+                                },
+                              );
+                            } catch (e, st) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (mounted) {
-                                  _mapRecoveryTimer?.cancel();
-                                  setState(() {
-                                    _mapLoaded = true;
-                                    _mapReady = true;
-                                    _mapLoading = false;
-                                    _mapFailed = false;
-                                    _showFallback = false;
-                                    _mapInitStarted = false;
-                                  });
-                                } else {
-                                  _mapLoaded = true;
+                                  _failMapInit(e, st);
                                 }
-                                _fallbackTimer?.cancel();
-                                if (!_didInitialFit) {
-                                  await _fitBounds();
-                                  _didInitialFit = true;
-                                }
-                              } catch (e, st) {
-                                _failMapInit(e, st);
-                              }
-                            },
-                            onCameraMoveStarted: () {
-                              if (_autoFollow) setState(() => _autoFollow = false);
-                            },
-                          );
-                        } catch (e, st) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) {
-                              _failMapInit(e, st);
+                              });
+                              return const SizedBox.shrink();
                             }
-                          });
-                          return const SizedBox.shrink();
-                        }
-                      },
+                          },
                         )
                       : _buildFallback(),
             ),
@@ -1147,8 +1148,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.8),
-                    borderRadius:
-                        BorderRadius.circular(widget.borderRadius),
+                    borderRadius: BorderRadius.circular(widget.borderRadius),
                   ),
                   child: const Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1156,8 +1156,7 @@ class _PFUberLiveMapState extends State<PFUberLiveMap>
                       SizedBox(
                         width: 24,
                         height: 24,
-                        child:
-                            CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       SizedBox(height: 10),
                       Text(
@@ -1197,8 +1196,7 @@ class _RecenterButton extends StatelessWidget {
           border: Border.all(color: PFColors.primary, width: 1.5),
           boxShadow: [
             BoxShadow(
-                color: PFColors.primary.withValues(alpha: 0.3),
-                blurRadius: 10),
+                color: PFColors.primary.withValues(alpha: 0.3), blurRadius: 10),
           ],
         ),
         child: const Icon(Icons.my_location_rounded,
@@ -1224,8 +1222,10 @@ class _StatusTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final norm =
-        status.toLowerCase().replaceAll(' ', '_').replaceAll('driver_assigned', 'accepted');
+    final norm = status
+        .toLowerCase()
+        .replaceAll(' ', '_')
+        .replaceAll('driver_assigned', 'accepted');
     final current = _steps.indexWhere((s) => s.$1 == norm);
 
     return SingleChildScrollView(
@@ -1240,8 +1240,7 @@ class _StatusTimeline extends StatelessWidget {
 
           return Row(mainAxisSize: MainAxisSize.min, children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
                 color: active
                     ? PFColors.primary
@@ -1254,8 +1253,7 @@ class _StatusTimeline extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 9,
-                  fontWeight:
-                      active ? FontWeight.w900 : FontWeight.w600,
+                  fontWeight: active ? FontWeight.w900 : FontWeight.w600,
                   color: active
                       ? Colors.white
                       : done

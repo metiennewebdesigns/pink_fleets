@@ -32,7 +32,6 @@ class PFGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = radius ?? PFSpacing.radiusCard; // 20 px
-    final effectiveTint = tint ?? const Color(0x1AFFFFFF); // ~10% white overlay
 
     final boxShadows = elevated
         ? [

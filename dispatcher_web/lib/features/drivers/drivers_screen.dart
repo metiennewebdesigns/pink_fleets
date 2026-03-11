@@ -18,7 +18,8 @@ class DriversScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: PFColors.white,
             borderRadius: BorderRadius.circular(18),
-            border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+            border:
+                const Border.fromBorderSide(BorderSide(color: PFColors.border)),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -36,8 +37,10 @@ class DriversScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   foregroundColor: PFColors.ink,
                   side: const BorderSide(color: PFColors.border),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 onPressed: () => showDialog(
                   context: context,
@@ -65,9 +68,14 @@ class DriversScreen extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Drivers', style: Theme.of(context).textTheme.headlineMedium),
+                    Text('Drivers',
+                        style: Theme.of(context).textTheme.headlineMedium),
                     const SizedBox(height: 6),
-                    Text('Dispatcher view', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted)),
+                    Text('Dispatcher view',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: PFColors.muted)),
                     const SizedBox(height: 12),
                     SizedBox(width: double.infinity, child: createLoginButton),
                     const SizedBox(height: 8),
@@ -78,9 +86,14 @@ class DriversScreen extends StatelessWidget {
 
               return Row(
                 children: [
-                  Text('Drivers', style: Theme.of(context).textTheme.headlineMedium),
+                  Text('Drivers',
+                      style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(width: 12),
-                  Text('Dispatcher view', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted)),
+                  Text('Dispatcher view',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: PFColors.muted)),
                   const Spacer(),
                   createLoginButton,
                   const SizedBox(width: 8),
@@ -91,22 +104,26 @@ class DriversScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
         Expanded(
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: driversRef.snapshots(),
             builder: (context, snap) {
-              if (snap.hasError) return Center(child: Text('Error:\n${snap.error}'));
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+              if (snap.hasError)
+                return Center(child: Text('Error:\n${snap.error}'));
+              if (!snap.hasData)
+                return const Center(child: CircularProgressIndicator());
 
               final docs = snap.data!.docs;
-              if (docs.isEmpty) return const Center(child: Text('No drivers yet.'));
+              if (docs.isEmpty)
+                return const Center(child: Text('No drivers yet.'));
 
               docs.sort((a, b) {
                 final ad = a.data();
                 final bd = b.data();
-                final aScore = ((ad['approved'] == true) ? 2 : 0) + ((ad['active'] != false) ? 1 : 0);
-                final bScore = ((bd['approved'] == true) ? 2 : 0) + ((bd['active'] != false) ? 1 : 0);
+                final aScore = ((ad['approved'] == true) ? 2 : 0) +
+                    ((ad['active'] != false) ? 1 : 0);
+                final bScore = ((bd['approved'] == true) ? 2 : 0) +
+                    ((bd['active'] != false) ? 1 : 0);
                 if (aScore != bScore) return bScore.compareTo(aScore);
                 final an = (ad['name'] ?? a.id).toString();
                 final bn = (bd['name'] ?? b.id).toString();
@@ -163,10 +180,17 @@ class DriversScreen extends StatelessWidget {
                             context: context,
                             builder: (_) => AlertDialog(
                               title: const Text('Delete driver doc?'),
-                              content: Text('This deletes driver PROFILE doc:\n$uid\n\nIt does NOT delete Auth login.'),
+                              content: Text(
+                                  'This deletes driver PROFILE doc:\n$uid\n\nIt does NOT delete Auth login.'),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                                ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                                TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel')),
+                                ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Delete')),
                               ],
                             ),
                           );
@@ -182,10 +206,11 @@ class DriversScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: PFColors.white,
                       borderRadius: BorderRadius.circular(18),
-                      border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                      border: const Border.fromBorderSide(
+                          BorderSide(color: PFColors.border)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),
@@ -198,16 +223,20 @@ class DriversScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ListTile(
-                              title: Text(name, style: const TextStyle(fontWeight: FontWeight.w900)),
+                              title: Text(name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w900)),
                               subtitle: Text('status: $status'),
                               trailing: narrow ? null : actions,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               isThreeLine: narrow,
                               dense: narrow,
                             ),
                             if (narrow)
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 0, 16, 12),
                                 child: actions,
                               ),
                           ],
@@ -220,7 +249,6 @@ class DriversScreen extends StatelessWidget {
             },
           ),
         ),
-
       ],
     );
   }
@@ -230,11 +258,13 @@ class DriversScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.10),
+        color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: c.withOpacity(0.2)),
+        border: Border.all(color: c.withValues(alpha: 0.2)),
       ),
-      child: Text(text, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: c)),
+      child: Text(text,
+          style:
+              TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: c)),
     );
   }
 }
@@ -243,7 +273,8 @@ class _CreateDriverUserDialog extends StatefulWidget {
   const _CreateDriverUserDialog();
 
   @override
-  State<_CreateDriverUserDialog> createState() => _CreateDriverUserDialogState();
+  State<_CreateDriverUserDialog> createState() =>
+      _CreateDriverUserDialogState();
 }
 
 class _CreateDriverUserDialogState extends State<_CreateDriverUserDialog> {
@@ -298,11 +329,18 @@ class _CreateDriverUserDialogState extends State<_CreateDriverUserDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Driver Name')),
+            TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Driver Name')),
             const SizedBox(height: 12),
-            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
+            TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: 'Email')),
             const SizedBox(height: 12),
-            TextField(controller: passCtrl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+            TextField(
+                controller: passCtrl,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true),
             if (error != null) ...[
               const SizedBox(height: 12),
               Text(error!, style: const TextStyle(color: Colors.red)),
@@ -311,8 +349,12 @@ class _CreateDriverUserDialogState extends State<_CreateDriverUserDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: loading ? null : () => Navigator.pop(context), child: const Text('Cancel')),
-        ElevatedButton(onPressed: loading ? null : create, child: Text(loading ? 'Creating…' : 'Create')),
+        TextButton(
+            onPressed: loading ? null : () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        ElevatedButton(
+            onPressed: loading ? null : create,
+            child: Text(loading ? 'Creating…' : 'Create')),
       ],
     );
   }
@@ -379,10 +421,13 @@ class _DriverEditorDialogState extends State<_DriverEditorDialog> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w900)),
+          Text(widget.title,
+              style: const TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
           Text(
-            editing ? 'Update driver profile details.' : 'Create a driver profile from an Auth UID.',
+            editing
+                ? 'Update driver profile details.'
+                : 'Create a driver profile from an Auth UID.',
             style: const TextStyle(color: PFColors.muted, fontSize: 12),
           ),
         ],
@@ -408,11 +453,13 @@ class _DriverEditorDialogState extends State<_DriverEditorDialog> {
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: PFColors.page,
                   borderRadius: BorderRadius.circular(14),
-                  border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                  border: const Border.fromBorderSide(
+                      BorderSide(color: PFColors.border)),
                 ),
                 child: Column(
                   children: [
@@ -458,7 +505,8 @@ class _DriverEditorDialogState extends State<_DriverEditorDialog> {
             backgroundColor: PFColors.pink2,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
           onPressed: () async {
             final uid = uidCtrl.text.trim();
@@ -466,7 +514,9 @@ class _DriverEditorDialogState extends State<_DriverEditorDialog> {
 
             await widget.onSave({
               'uid': uid,
-              'name': nameCtrl.text.trim().isEmpty ? 'Driver' : nameCtrl.text.trim(),
+              'name': nameCtrl.text.trim().isEmpty
+                  ? 'Driver'
+                  : nameCtrl.text.trim(),
               'approved': approved,
               'active': active,
               'status': status,

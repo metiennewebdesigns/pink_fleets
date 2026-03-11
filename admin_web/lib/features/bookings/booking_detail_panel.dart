@@ -20,7 +20,8 @@ import '../../theme/pink_fleets_theme.dart';
 class BookingDetailPanel extends ConsumerStatefulWidget {
   final String bookingId;
   final bool embedded;
-  const BookingDetailPanel({super.key, required this.bookingId, this.embedded = false});
+  const BookingDetailPanel(
+      {super.key, required this.bookingId, this.embedded = false});
 
   @override
   ConsumerState<BookingDetailPanel> createState() => _BookingDetailPanelState();
@@ -97,13 +98,16 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
     final privateRef = db.collection('bookings_private').doc(widget.bookingId);
 
     final driversQ = db.collection('drivers').where('active', isEqualTo: true);
-    final vehiclesQ = db.collection('vehicles').where('active', isEqualTo: true);
+    final vehiclesQ =
+        db.collection('vehicles').where('active', isEqualTo: true);
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: bookingRef.snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-        if (!snap.data!.exists) return const Center(child: Text('Booking not found.'));
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
+        if (!snap.data!.exists)
+          return const Center(child: Text('Booking not found.'));
 
         final b = snap.data!.data()!;
         final status = (b['status'] ?? 'unknown').toString();
@@ -121,7 +125,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
           assigned?['driverId'],
           b['driverId'],
         ]);
-        final currentVehicleId = (assigned?['vehicleId'] as String?)?.toString();
+        final currentVehicleId =
+            (assigned?['vehicleId'] as String?)?.toString();
         final requestedVehicle = _vehicleLabel(_firstText([
           b['requestedVehicle'],
           b['requested_vehicle'],
@@ -138,11 +143,14 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
 
         return ListView(
           shrinkWrap: widget.embedded,
-          physics: widget.embedded ? const NeverScrollableScrollPhysics() : null,
+          physics:
+              widget.embedded ? const NeverScrollableScrollPhysics() : null,
           children: [
-            _header(context, bookingId: widget.bookingId, status: status, riderName: riderName),
+            _header(context,
+                bookingId: widget.bookingId,
+                status: status,
+                riderName: riderName),
             const SizedBox(height: 12),
-
             _section(
               title: 'Rider',
               child: Column(
@@ -156,9 +164,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Dispatch',
               child: Column(
@@ -173,10 +179,13 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                         initialValue: selectedDriverId,
                         decoration: const InputDecoration(labelText: 'Driver'),
                         items: [
-                          const DropdownMenuItem<String?>(value: null, child: Text('Unassigned')),
+                          const DropdownMenuItem<String?>(
+                              value: null, child: Text('Unassigned')),
                           ...drivers.map((doc) {
-                            final name = (doc.data()['name'] ?? doc.id).toString();
-                            return DropdownMenuItem<String?>(value: doc.id, child: Text(name));
+                            final name =
+                                (doc.data()['name'] ?? doc.id).toString();
+                            return DropdownMenuItem<String?>(
+                                value: doc.id, child: Text(name));
                           }),
                         ],
                         onChanged: (v) => setState(() => selectedDriverId = v),
@@ -189,14 +198,19 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                     builder: (context, vs) {
                       if (!vs.hasData) return const LinearProgressIndicator();
                       final vehicles = vs.data!.docs;
-                      final effectiveVehicleId = selectedVehicleId ?? currentVehicleId;
-                      final assignedVehicleName = effectiveVehicleId == null || effectiveVehicleId.isEmpty
+                      final effectiveVehicleId =
+                          selectedVehicleId ?? currentVehicleId;
+                      final assignedVehicleName = effectiveVehicleId == null ||
+                              effectiveVehicleId.isEmpty
                           ? 'Unassigned'
                           : vehicles
                                   .where((doc) => doc.id == effectiveVehicleId)
-                                  .map((doc) => (doc.data()['name'] ?? doc.id).toString())
+                                  .map((doc) =>
+                                      (doc.data()['name'] ?? doc.id).toString())
                                   .cast<String?>()
-                                  .firstWhere((name) => name != null && name.isNotEmpty, orElse: () => effectiveVehicleId) ??
+                                  .firstWhere(
+                                      (name) => name != null && name.isNotEmpty,
+                                      orElse: () => effectiveVehicleId) ??
                               effectiveVehicleId;
 
                       return Column(
@@ -207,15 +221,20 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String?>(
                             initialValue: selectedVehicleId,
-                            decoration: const InputDecoration(labelText: 'Vehicle'),
+                            decoration:
+                                const InputDecoration(labelText: 'Vehicle'),
                             items: [
-                              const DropdownMenuItem<String?>(value: null, child: Text('Unassigned')),
+                              const DropdownMenuItem<String?>(
+                                  value: null, child: Text('Unassigned')),
                               ...vehicles.map((doc) {
-                                final name = (doc.data()['name'] ?? doc.id).toString();
-                                return DropdownMenuItem<String?>(value: doc.id, child: Text(name));
+                                final name =
+                                    (doc.data()['name'] ?? doc.id).toString();
+                                return DropdownMenuItem<String?>(
+                                    value: doc.id, child: Text(name));
                               }),
                             ],
-                            onChanged: (v) => setState(() => selectedVehicleId = v),
+                            onChanged: (v) =>
+                                setState(() => selectedVehicleId = v),
                           ),
                         ],
                       );
@@ -237,7 +256,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                           'updatedAt': FieldValue.serverTimestamp(),
                         }, SetOptions(merge: true));
 
-                        if (selectedDriverId != null && selectedDriverId!.isNotEmpty) {
+                        if (selectedDriverId != null &&
+                            selectedDriverId!.isNotEmpty) {
                           await _notifyDriver(
                             driverUid: selectedDriverId!,
                             bookingId: widget.bookingId,
@@ -255,7 +275,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Assigned + notified')),
+                            const SnackBar(
+                                content: Text('Assigned + notified')),
                           );
                         }
                       },
@@ -265,9 +286,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Locations',
               subtitle: 'Pickup + dropoff addresses',
@@ -280,16 +299,16 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _kv('Pickup Address', pickupAddress.isEmpty ? '—' : pickupAddress),
-                      _kv('Dropoff Address', dropoffAddress.isEmpty ? '—' : dropoffAddress),
+                      _kv('Pickup Address',
+                          pickupAddress.isEmpty ? '—' : pickupAddress),
+                      _kv('Dropoff Address',
+                          dropoffAddress.isEmpty ? '—' : dropoffAddress),
                     ],
                   );
                 },
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Live Map',
               subtitle: 'Real-time driver location',
@@ -301,7 +320,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                   final rawDropoff = p['dropoffGeo'];
                   final pickupGeo = rawPickup is GeoPoint ? rawPickup : null;
                   final dropoffGeo = rawDropoff is GeoPoint ? rawDropoff : null;
-                  final driverId = currentDriverId.isNotEmpty ? currentDriverId : null;
+                  final driverId =
+                      currentDriverId.isNotEmpty ? currentDriverId : null;
                   return PFUberLiveMap(
                     driverId: driverId,
                     pickupGeo: pickupGeo,
@@ -312,9 +332,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 },
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Financial',
               subtitle: 'Admin only • bookings_private',
@@ -322,7 +340,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 stream: privateRef.snapshots(),
                 builder: (context, ps) {
                   if (!ps.hasData) return const LinearProgressIndicator();
-                  if (!ps.data!.exists) return const Text('No private financial record yet.');
+                  if (!ps.data!.exists)
+                    return const Text('No private financial record yet.');
                   final p = ps.data!.data()!;
                   final payStatus = (p['paymentStatus'] ?? '--').toString();
                   final snapMap = p['pricingSnapshot'] as Map<String, dynamic>?;
@@ -331,15 +350,17 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _kv('paymentStatus', payStatus),
-                      _kv('total', total == null ? '--' : _money((total as num) / 100.0)),
+                      _kv(
+                          'total',
+                          total == null
+                              ? '--'
+                              : _money((total as num) / 100.0)),
                     ],
                   );
                 },
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Driver Inspection',
               subtitle: 'Pre + post trip walk-around',
@@ -351,9 +372,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Policies (Admin Settings)',
               subtitle: 'Live from admin_settings/app',
@@ -365,30 +384,40 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                   }
                   if (!ss.hasData) return const LinearProgressIndicator();
                   if (ss.data != null && ss.data!.exists == false) {
-                    return const Text('No admin settings found. Open Settings to create defaults.');
+                    return const Text(
+                        'No admin settings found. Open Settings to create defaults.');
                   }
                   final s = ss.data?.data() ?? {};
 
-                  final minBookingHours = (s['minBookingHours'] as num?)?.toDouble();
-                  final minNoticeHours = (s['minNoticeHours'] as num?)?.toDouble();
-                  final serviceAreaMiles = (s['serviceAreaMiles'] as num?)?.toDouble();
+                  final minBookingHours =
+                      (s['minBookingHours'] as num?)?.toDouble();
+                  final minNoticeHours =
+                      (s['minNoticeHours'] as num?)?.toDouble();
+                  final serviceAreaMiles =
+                      (s['serviceAreaMiles'] as num?)?.toDouble();
                   final defaultCity = (s['defaultCity'] ?? '--').toString();
 
                   final gratuityPct = (s['gratuityPct'] as num?)?.toDouble();
                   final taxRatePct = (s['taxRatePct'] as num?)?.toDouble();
                   final bookingFee = (s['bookingFee'] as num?)?.toDouble();
-                  final fuelSurchargePct = (s['fuelSurchargePct'] as num?)?.toDouble();
+                  final fuelSurchargePct =
+                      (s['fuelSurchargePct'] as num?)?.toDouble();
 
-                  final cancelWindowHours = (s['cancelWindowHours'] as num?)?.toDouble();
-                  final lateCancelFee = (s['lateCancelFee'] as num?)?.toDouble();
+                  final cancelWindowHours =
+                      (s['cancelWindowHours'] as num?)?.toDouble();
+                  final lateCancelFee =
+                      (s['lateCancelFee'] as num?)?.toDouble();
 
-                  final overtimeGrace = (s['overtimeGraceMinutes'] as num?)?.toInt();
-                  final overtimeRate = (s['overtimeRatePerMinute'] as num?)?.toDouble();
+                  final overtimeGrace =
+                      (s['overtimeGraceMinutes'] as num?)?.toInt();
+                  final overtimeRate =
+                      (s['overtimeRatePerMinute'] as num?)?.toDouble();
 
                   final serviceStart = (s['serviceStartHour'] as num?)?.toInt();
                   final serviceEnd = (s['serviceEndHour'] as num?)?.toInt();
 
-                  final requirePayment = (s['requirePaymentBeforeDispatch'] as bool?) ?? false;
+                  final requirePayment =
+                      (s['requirePaymentBeforeDispatch'] as bool?) ?? false;
 
                   if (s.isEmpty) {
                     return const Text('No admin settings values available.');
@@ -397,29 +426,45 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (minBookingHours != null) _kv('minBookingHours', minBookingHours.toStringAsFixed(0)),
-                      if (minNoticeHours != null) _kv('minNoticeHours', minNoticeHours.toStringAsFixed(0)),
+                      if (minBookingHours != null)
+                        _kv('minBookingHours',
+                            minBookingHours.toStringAsFixed(0)),
+                      if (minNoticeHours != null)
+                        _kv('minNoticeHours',
+                            minNoticeHours.toStringAsFixed(0)),
                       if (serviceAreaMiles != null)
-                        _kv('serviceAreaMiles', '${serviceAreaMiles.toStringAsFixed(0)} miles from $defaultCity'),
-                      if (gratuityPct != null) _kv('gratuityPct', '${gratuityPct.toStringAsFixed(0)}%'),
-                      if (taxRatePct != null) _kv('taxRatePct', '${taxRatePct.toStringAsFixed(2)}%'),
-                      if (bookingFee != null) _kv('bookingFee', _money(bookingFee)),
-                      if (fuelSurchargePct != null) _kv('fuelSurchargePct', '${fuelSurchargePct.toStringAsFixed(2)}%'),
-                      if (cancelWindowHours != null) _kv('cancelWindowHours', '${cancelWindowHours.toStringAsFixed(0)} hrs'),
-                      if (lateCancelFee != null) _kv('lateCancelFee', _money(lateCancelFee)),
-                      if (overtimeGrace != null) _kv('overtimeGraceMinutes', overtimeGrace.toString()),
-                      if (overtimeRate != null) _kv('overtimeRatePerMinute', _money(overtimeRate)),
+                        _kv('serviceAreaMiles',
+                            '${serviceAreaMiles.toStringAsFixed(0)} miles from $defaultCity'),
+                      if (gratuityPct != null)
+                        _kv('gratuityPct',
+                            '${gratuityPct.toStringAsFixed(0)}%'),
+                      if (taxRatePct != null)
+                        _kv('taxRatePct', '${taxRatePct.toStringAsFixed(2)}%'),
+                      if (bookingFee != null)
+                        _kv('bookingFee', _money(bookingFee)),
+                      if (fuelSurchargePct != null)
+                        _kv('fuelSurchargePct',
+                            '${fuelSurchargePct.toStringAsFixed(2)}%'),
+                      if (cancelWindowHours != null)
+                        _kv('cancelWindowHours',
+                            '${cancelWindowHours.toStringAsFixed(0)} hrs'),
+                      if (lateCancelFee != null)
+                        _kv('lateCancelFee', _money(lateCancelFee)),
+                      if (overtimeGrace != null)
+                        _kv('overtimeGraceMinutes', overtimeGrace.toString()),
+                      if (overtimeRate != null)
+                        _kv('overtimeRatePerMinute', _money(overtimeRate)),
                       if (serviceStart != null && serviceEnd != null)
-                        _kv('serviceHours', '${serviceStart.toString().padLeft(2, '0')}:00 - ${serviceEnd.toString().padLeft(2, '0')}:00'),
-                      _kv('requirePaymentBeforeDispatch', requirePayment ? 'Yes' : 'No'),
+                        _kv('serviceHours',
+                            '${serviceStart.toString().padLeft(2, '0')}:00 - ${serviceEnd.toString().padLeft(2, '0')}:00'),
+                      _kv('requirePaymentBeforeDispatch',
+                          requirePayment ? 'Yes' : 'No'),
                     ],
                   );
                 },
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Internal Notes',
               child: Column(
@@ -449,9 +494,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             _section(
               title: 'Adjustments / Surcharges',
               subtitle: 'Staff only • bookings_private',
@@ -467,7 +510,9 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
   }
 
   Widget _header(BuildContext context,
-      {required String bookingId, required String status, required String riderName}) {
+      {required String bookingId,
+      required String status,
+      required String riderName}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -476,7 +521,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
         border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -492,12 +537,16 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
               children: [
                 Text(
                   riderName.isEmpty ? 'Booking' : riderName,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 16),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   bookingId.substring(0, 8),
-                  style: const TextStyle(color: PFColors.muted, fontWeight: FontWeight.w600, fontSize: 12),
+                  style: const TextStyle(
+                      color: PFColors.muted,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12),
                 ),
               ],
             ),
@@ -522,7 +571,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
         if (!snap.data!.exists) {
           return Align(
             alignment: Alignment.centerLeft,
-            child: Text('$title: No inspection yet.', style: const TextStyle(color: PFColors.muted)),
+            child: Text('$title: No inspection yet.',
+                style: const TextStyle(color: PFColors.muted)),
           );
         }
 
@@ -537,9 +587,11 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
           children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
-            Text('Updated: $updatedAt', style: const TextStyle(color: PFColors.muted, fontSize: 12)),
+            Text('Updated: $updatedAt',
+                style: const TextStyle(color: PFColors.muted, fontSize: 12)),
             const SizedBox(height: 8),
-            const Text('Checklist', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Checklist',
+                style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             ..._inspectionItems.map((item) {
               final ok = checklist[item.key] == true;
@@ -551,7 +603,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
             Text(notes.isEmpty ? '—' : notes),
             if (uploads.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text('Uploads', style: TextStyle(fontWeight: FontWeight.w700)),
+              const Text('Uploads',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
               ...uploads.map((u) {
                 final name = (u['name'] ?? 'Photo').toString();
@@ -562,7 +615,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(name,
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                       if (url.isNotEmpty || path.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         ClipRRect(
@@ -570,10 +624,13 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                           child: FutureBuilder<Uint8List?>(
                             future: _fetchUploadBytes(u),
                             builder: (context, imgSnap) {
-                              if (imgSnap.connectionState == ConnectionState.waiting) {
+                              if (imgSnap.connectionState ==
+                                  ConnectionState.waiting) {
                                 return const SizedBox(
                                   height: 140,
-                                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                  child: Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2)),
                                 );
                               }
                               final bytes = imgSnap.data;
@@ -588,15 +645,18 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                                         url,
                                         height: 140,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const SizedBox(
+                                        errorBuilder: (_, __, ___) =>
+                                            const SizedBox(
                                           height: 140,
-                                          child: Center(child: Text('Image unsupported')),
+                                          child: Center(
+                                              child: Text('Image unsupported')),
                                         ),
                                       );
                                     }
                                     return const SizedBox(
                                       height: 140,
-                                      child: Center(child: Text('Image unsupported')),
+                                      child: Center(
+                                          child: Text('Image unsupported')),
                                     );
                                   },
                                 );
@@ -608,7 +668,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => const SizedBox(
                                     height: 140,
-                                    child: Center(child: Text('Image unsupported')),
+                                    child: Center(
+                                        child: Text('Image unsupported')),
                                   ),
                                 );
                               }
@@ -623,7 +684,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
                         if (url.isNotEmpty)
                           SelectableText(
                             url,
-                            style: const TextStyle(color: PFColors.muted, fontSize: 12),
+                            style: const TextStyle(
+                                color: PFColors.muted, fontSize: 12),
                           ),
                       ],
                     ],
@@ -698,13 +760,16 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
     doc.addPage(
       pw.MultiPage(
         build: (context) => [
-          pw.Text('Pink Fleets • Driver Inspection', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          pw.Text('Pink Fleets • Driver Inspection',
+              style:
+                  pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 6),
           pw.Text('Booking: ${bookingId.substring(0, 8)}'),
           pw.Text('Stage: $title'),
           pw.Text('Updated: $updatedAt'),
           pw.SizedBox(height: 12),
-          pw.Text('Checklist', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.Text('Checklist',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 6),
           ..._inspectionItems.map((item) {
             final ok = checklist[item.key] == true;
@@ -716,7 +781,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
           pw.Text(notes.isEmpty ? '—' : notes),
           if (uploadWidgets.isNotEmpty) ...[
             pw.SizedBox(height: 12),
-            pw.Text('Uploads', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text('Uploads',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 6),
             ...uploadWidgets,
           ],
@@ -732,10 +798,14 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
     final url = (upload['url'] ?? '').toString();
     try {
       if (path.isNotEmpty) {
-        return await FirebaseStorage.instance.ref(path).getData(10 * 1024 * 1024);
+        return await FirebaseStorage.instance
+            .ref(path)
+            .getData(10 * 1024 * 1024);
       }
       if (url.isNotEmpty) {
-        return await FirebaseStorage.instance.refFromURL(url).getData(10 * 1024 * 1024);
+        return await FirebaseStorage.instance
+            .refFromURL(url)
+            .getData(10 * 1024 * 1024);
       }
     } catch (_) {
       // fall back to raw url
@@ -750,7 +820,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
     }
   }
 
-  Widget _section({required String title, String? subtitle, required Widget child}) {
+  Widget _section(
+      {required String title, String? subtitle, required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -759,7 +830,7 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
         border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -772,7 +843,10 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
           if (subtitle != null) ...[
             const SizedBox(height: 6),
             Text(subtitle,
-                style: const TextStyle(color: PFColors.muted, fontWeight: FontWeight.w600, fontSize: 12)),
+                style: const TextStyle(
+                    color: PFColors.muted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12)),
           ],
           const SizedBox(height: 12),
           child,
@@ -791,7 +865,8 @@ class _BookingDetailPanelState extends ConsumerState<BookingDetailPanel> {
             flex: 2,
             child: Text(
               k,
-              style: const TextStyle(fontWeight: FontWeight.w700, color: PFColors.muted),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, color: PFColors.muted),
             ),
           ),
           const SizedBox(width: 8),
@@ -853,8 +928,10 @@ class _StatusDot extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+  Widget build(BuildContext context) => Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: c, shape: BoxShape.circle));
 }
 
 class _StatusChip extends StatelessWidget {
@@ -866,10 +943,12 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: PFColors.gold.withOpacity(0.08),
+        color: PFColors.gold.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(status, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: PFColors.ink)),
+      child: Text(status,
+          style: const TextStyle(
+              fontWeight: FontWeight.w700, fontSize: 12, color: PFColors.ink)),
     );
   }
 }
@@ -906,10 +985,10 @@ class _AdjustmentsFormState extends State<_AdjustmentsForm> {
   void _hydrate(Map<String, dynamic> adj) {
     if (_hydrated) return;
     _hydrated = true;
-    _fuelCtrl.text =
-        ((adj['fuelSurchargePct'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(1);
-    _parkingCtrl.text =
-        (((adj['parkingCents'] as num?)?.toInt() ?? 0) / 100).toStringAsFixed(2);
+    _fuelCtrl.text = ((adj['fuelSurchargePct'] as num?)?.toDouble() ?? 0.0)
+        .toStringAsFixed(1);
+    _parkingCtrl.text = (((adj['parkingCents'] as num?)?.toInt() ?? 0) / 100)
+        .toStringAsFixed(2);
     _tollsCtrl.text =
         (((adj['tollsCents'] as num?)?.toInt() ?? 0) / 100).toStringAsFixed(2);
     _venueCtrl.text =
@@ -954,8 +1033,8 @@ class _AdjustmentsFormState extends State<_AdjustmentsForm> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Save failed: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Save failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -974,16 +1053,19 @@ class _AdjustmentsFormState extends State<_AdjustmentsForm> {
                 as Map<String, dynamic>?) ??
             {};
         if (!_hydrated && adj.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback(
-              (_) { if (mounted) setState(() => _hydrate(adj)); });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _hydrate(adj));
+          });
         }
         final byRole = (adj['addedByRole'] ?? '').toString();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (byRole.isNotEmpty) ...[const SizedBox(height: 4),
+            if (byRole.isNotEmpty) ...[
+              const SizedBox(height: 4),
               Text('Last saved by: $byRole',
-                  style: const TextStyle(color: PFColors.muted, fontSize: 11))],
+                  style: const TextStyle(color: PFColors.muted, fontSize: 11))
+            ],
             const SizedBox(height: 10),
             Row(children: [
               Expanded(

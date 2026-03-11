@@ -50,7 +50,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         content: SizedBox(
           width: 360,
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: resolvedUid.isEmpty ? null : db.collection('riders').doc(resolvedUid).snapshots(),
+            stream: resolvedUid.isEmpty
+                ? null
+                : db.collection('riders').doc(resolvedUid).snapshots(),
             builder: (context, snap) {
               final data = snap.data?.data() ?? {};
               final merged = {
@@ -72,18 +74,22 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     children: [
                       CircleAvatar(
                         radius: 22,
-                        backgroundColor: PFColors.gold.withOpacity(0.2),
-                        backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                        backgroundColor: PFColors.gold.withValues(alpha: 0.2),
+                        backgroundImage:
+                            photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
                         child: photoUrl.isEmpty
                             ? Text(
                                 name.isNotEmpty ? name[0].toUpperCase() : 'R',
-                                style: const TextStyle(fontWeight: FontWeight.w800),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800),
                               )
                             : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                        child: Text(name,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w800)),
                       ),
                     ],
                   ),
@@ -113,7 +119,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close')),
         ],
       ),
     );
@@ -122,7 +130,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final db = ref.watch(firestoreProvider);
-    final bookingsQ = db.collection('bookings').orderBy('createdAt', descending: true);
+    final bookingsQ =
+        db.collection('bookings').orderBy('createdAt', descending: true);
     final isNarrow = MediaQuery.of(context).size.width < 1100;
 
     Widget listPane() {
@@ -147,7 +156,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             }).toList();
           }
 
-          if (docs.isEmpty) return const Center(child: Text('No bookings found.'));
+          if (docs.isEmpty)
+            return const Center(child: Text('No bookings found.'));
 
           selectedBookingId ??= docs.first.id;
 
@@ -155,10 +165,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             decoration: BoxDecoration(
               color: PFColors.white,
               borderRadius: BorderRadius.circular(18),
-              border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+              border: const Border.fromBorderSide(
+                  BorderSide(color: PFColors.border)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 18,
                   offset: const Offset(0, 10),
                 ),
@@ -168,7 +179,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: docs.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: PFColors.border),
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, color: PFColors.border),
               itemBuilder: (context, i) {
                 final doc = docs[i];
                 final data = doc.data();
@@ -176,8 +188,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
                 final rider = data['riderInfo'] as Map<String, dynamic>?;
                 final riderName = (rider?['name'] ?? 'Unknown').toString();
-                final riderUid = (data['riderUid'] ?? rider?['uid'] ?? rider?['id'] ?? '').toString();
-                final canOpenRider = riderUid.trim().isNotEmpty || rider != null;
+                final riderUid =
+                    (data['riderUid'] ?? rider?['uid'] ?? rider?['id'] ?? '')
+                        .toString();
+                final canOpenRider =
+                    riderUid.trim().isNotEmpty || rider != null;
                 final status = (data['status'] ?? 'unknown').toString();
 
                 final isSelected = selectedBookingId == id;
@@ -185,21 +200,31 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 return InkWell(
                   onTap: () => setState(() => selectedBookingId = id),
                   child: Container(
-                    color: isSelected ? PFColors.gold.withOpacity(0.08) : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    color: isSelected
+                        ? PFColors.gold.withValues(alpha: 0.08)
+                        : Colors.transparent,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                     child: Row(
                       children: [
                         _StatusDot(status: status),
                         const SizedBox(width: 10),
                         Expanded(
                           child: InkWell(
-                            onTap: canOpenRider ? () => _showRiderProfile(context, riderUid, rider) : null,
+                            onTap: canOpenRider
+                                ? () =>
+                                    _showRiderProfile(context, riderUid, rider)
+                                : null,
                             child: Text(
                               riderName,
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                color: canOpenRider ? PFColors.pink1 : PFColors.ink,
-                                decoration: canOpenRider ? TextDecoration.underline : TextDecoration.none,
+                                color: canOpenRider
+                                    ? PFColors.pink1
+                                    : PFColors.ink,
+                                decoration: canOpenRider
+                                    ? TextDecoration.underline
+                                    : TextDecoration.none,
                               ),
                             ),
                           ),
@@ -233,17 +258,19 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               decoration: BoxDecoration(
                 color: PFColors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+                border: const Border.fromBorderSide(
+                    BorderSide(color: PFColors.border)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 18,
                     offset: const Offset(0, 10),
                   ),
                 ],
               ),
               padding: const EdgeInsets.all(16),
-              child: BookingDetailPanel(bookingId: selectedBookingId!, embedded: true),
+              child: BookingDetailPanel(
+                  bookingId: selectedBookingId!, embedded: true),
             );
     }
 
@@ -317,7 +344,8 @@ class _HeaderRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: PFColors.white,
             borderRadius: BorderRadius.circular(18),
-            border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
+            border:
+                const Border.fromBorderSide(BorderSide(color: PFColors.border)),
           ),
           child: compact
               ? Column(
@@ -326,11 +354,15 @@ class _HeaderRow extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Bookings', style: Theme.of(context).textTheme.headlineMedium),
+                        Text('Bookings',
+                            style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(height: 2),
                         Text(
                           'Operational Control Center',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: PFColors.muted),
                         ),
                       ],
                     ),
@@ -350,17 +382,23 @@ class _HeaderRow extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Bookings', style: Theme.of(context).textTheme.headlineMedium),
+                          Text('Bookings',
+                              style:
+                                  Theme.of(context).textTheme.headlineMedium),
                           const SizedBox(height: 2),
                           Text(
                             'Operational Control Center',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: PFColors.muted),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: PFColors.muted),
                           ),
                         ],
                       ),
                     ),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 220, maxWidth: 320),
+                      constraints:
+                          const BoxConstraints(minWidth: 220, maxWidth: 320),
                       child: TextField(
                         controller: searchCtrl,
                         decoration: const InputDecoration(
@@ -403,18 +441,22 @@ class _KpiRow extends StatelessWidget {
 
     final todayStream = db
         .collection('bookings')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .snapshots();
 
     final monthStream = db
         .collection('bookings')
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
         .snapshots();
 
-    final activeStream = db
-        .collection('bookings')
-        .where('status', whereIn: ['driver_assigned', 'en_route', 'arrived', 'in_progress'])
-        .snapshots();
+    final activeStream = db.collection('bookings').where('status', whereIn: [
+      'driver_assigned',
+      'en_route',
+      'arrived',
+      'in_progress'
+    ]).snapshots();
 
     final kpis = <Widget>[
       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -434,13 +476,16 @@ class _KpiRow extends StatelessWidget {
       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: todayStream,
         builder: (context, snap) {
-          if (!snap.hasData) return const _KpiCard(title: 'Revenue Today', value: '—');
+          if (!snap.hasData)
+            return const _KpiCard(title: 'Revenue Today', value: '—');
           final ids = snap.data!.docs.map((d) => d.id);
           return FutureBuilder<num>(
             future: _sumPrivateTotals(ids),
             builder: (context, s) {
               final total = s.data ?? 0;
-              return _KpiCard(title: 'Revenue Today', value: '\$${total.toStringAsFixed(0)}');
+              return _KpiCard(
+                  title: 'Revenue Today',
+                  value: '\$${total.toStringAsFixed(0)}');
             },
           );
         },
@@ -448,13 +493,16 @@ class _KpiRow extends StatelessWidget {
       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: monthStream,
         builder: (context, snap) {
-          if (!snap.hasData) return const _KpiCard(title: 'Revenue Month', value: '—');
+          if (!snap.hasData)
+            return const _KpiCard(title: 'Revenue Month', value: '—');
           final ids = snap.data!.docs.map((d) => d.id);
           return FutureBuilder<num>(
             future: _sumPrivateTotals(ids),
             builder: (context, s) {
               final total = s.data ?? 0;
-              return _KpiCard(title: 'Revenue Month', value: '\$${total.toStringAsFixed(0)}');
+              return _KpiCard(
+                  title: 'Revenue Month',
+                  value: '\$${total.toStringAsFixed(0)}');
             },
           );
         },
@@ -481,9 +529,8 @@ class _KpiRow extends StatelessWidget {
         return Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: kpis
-              .map((w) => SizedBox(width: itemWidth, child: w))
-              .toList(),
+          children:
+              kpis.map((w) => SizedBox(width: itemWidth, child: w)).toList(),
         );
       },
     );
@@ -505,7 +552,7 @@ class _KpiCard extends StatelessWidget {
         border: const Border.fromBorderSide(BorderSide(color: PFColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -514,15 +561,21 @@ class _KpiCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: PFColors.muted)),
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w600, color: PFColors.muted)),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: PFColors.ink)),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  color: PFColors.ink)),
           const SizedBox(height: 6),
           Container(
             height: 4,
             width: 42,
             decoration: BoxDecoration(
-              color: PFColors.gold.withOpacity(0.6),
+              color: PFColors.gold.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -559,7 +612,10 @@ class _StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+    return Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: c, shape: BoxShape.circle));
   }
 }
 
@@ -572,12 +628,13 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: PFColors.gold.withOpacity(0.08),
+        color: PFColors.gold.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         status,
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: PFColors.ink),
+        style: const TextStyle(
+            fontWeight: FontWeight.w700, fontSize: 12, color: PFColors.ink),
       ),
     );
   }

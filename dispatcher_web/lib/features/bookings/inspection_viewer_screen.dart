@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:html' as html;
 import 'dart:typed_data';
 
@@ -119,8 +119,7 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
 
           final data = snap.data!.data()!;
           final notes = (data['notes'] ?? '').toString();
-          final checklist =
-              (data['checklist'] as Map<String, dynamic>?) ?? {};
+          final checklist = (data['checklist'] as Map<String, dynamic>?) ?? {};
           final uploads = (data['uploads'] as List?)?.cast<Map>() ?? [];
           final updatedAt = _fmtTs(data['updatedAt']);
 
@@ -163,20 +162,17 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_stageTitle,
-                                  style: PFTypography.titleLarge),
+                              Text(_stageTitle, style: PFTypography.titleLarge),
                               Text('Updated: $updatedAt',
                                   style: PFTypography.bodySmall),
                             ],
                           ),
                         ),
                         PFChipStatus(
-                          status: widget.stage == 'pre'
-                              ? 'submitted'
-                              : 'completed',
-                          label: widget.stage == 'pre'
-                              ? 'PRE-TRIP'
-                              : 'POST-TRIP',
+                          status:
+                              widget.stage == 'pre' ? 'submitted' : 'completed',
+                          label:
+                              widget.stage == 'pre' ? 'PRE-TRIP' : 'POST-TRIP',
                         ),
                       ],
                     ),
@@ -189,8 +185,7 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
                   const SizedBox(height: PFSpacing.md),
                   PFCard(
                     padding: const EdgeInsets.all(PFSpacing.base),
-                    child: _ChecklistGrid(
-                        checklist: checklist, items: _kItems),
+                    child: _ChecklistGrid(checklist: checklist, items: _kItems),
                   ),
 
                   const SizedBox(height: PFSpacing.xl),
@@ -276,15 +271,15 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
     final imgWidgets = <pw.Widget>[];
     for (final u in uploads) {
       final name = (u['name'] ?? 'Upload').toString();
-      if (!_isImage(name) && !(u['type'] ?? '').toString().startsWith('image')) {
+      if (!_isImage(name) &&
+          !(u['type'] ?? '').toString().startsWith('image')) {
         continue;
       }
       try {
         final bytes = await _fetchBytes(u);
         if (bytes == null) continue;
         imgWidgets.addAll([
-          pw.Text(name,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.Text(name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 4),
           pw.Image(pw.MemoryImage(bytes), height: 200, fit: pw.BoxFit.cover),
           pw.SizedBox(height: 10),
@@ -292,49 +287,54 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
       } catch (_) {}
     }
 
-    doc.addPage(pw.MultiPage(build: (ctx) => [
-      pw.Text('Pink Fleets — Driver Inspection',
-          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-      pw.SizedBox(height: 6),
-      pw.Text('Booking: ${widget.bookingId.substring(0, 8)}'),
-      pw.Text('Stage: $_stageTitle'),
-      pw.Text('Updated: $updatedAt'),
-      pw.SizedBox(height: 14),
-      pw.Text('Checklist',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-      pw.SizedBox(height: 6),
-      pw.Table(
-        border: const pw.TableBorder(
-            horizontalInside: pw.BorderSide(color: PdfColors.grey300)),
-        children: _kItems.map((item) {
-          final ok = checklist[item.$1] == true;
-          return pw.TableRow(children: [
-            pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 3),
-              child: pw.Text(item.$2),
-            ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 3),
-              child: pw.Text(ok ? '✓' : '—',
+    doc.addPage(pw.MultiPage(
+        build: (ctx) => [
+              pw.Text('Pink Fleets — Driver Inspection',
                   style: pw.TextStyle(
-                      color: ok ? PdfColors.green : PdfColors.grey)),
-            ),
-          ]);
-        }).toList(),
-      ),
-      pw.SizedBox(height: 14),
-      pw.Text('Notes',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-      pw.SizedBox(height: 6),
-      pw.Text(notes.isEmpty ? '—' : notes),
-      if (imgWidgets.isNotEmpty) ...[
-        pw.SizedBox(height: 14),
-        pw.Text('Photos',
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-        pw.SizedBox(height: 6),
-        ...imgWidgets,
-      ],
-    ]));
+                      fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 6),
+              pw.Text('Booking: ${widget.bookingId.substring(0, 8)}'),
+              pw.Text('Stage: $_stageTitle'),
+              pw.Text('Updated: $updatedAt'),
+              pw.SizedBox(height: 14),
+              pw.Text('Checklist',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 14)),
+              pw.SizedBox(height: 6),
+              pw.Table(
+                border: const pw.TableBorder(
+                    horizontalInside: pw.BorderSide(color: PdfColors.grey300)),
+                children: _kItems.map((item) {
+                  final ok = checklist[item.$1] == true;
+                  return pw.TableRow(children: [
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                      child: pw.Text(item.$2),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                      child: pw.Text(ok ? '✓' : '—',
+                          style: pw.TextStyle(
+                              color: ok ? PdfColors.green : PdfColors.grey)),
+                    ),
+                  ]);
+                }).toList(),
+              ),
+              pw.SizedBox(height: 14),
+              pw.Text('Notes',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 14)),
+              pw.SizedBox(height: 6),
+              pw.Text(notes.isEmpty ? '—' : notes),
+              if (imgWidgets.isNotEmpty) ...[
+                pw.SizedBox(height: 14),
+                pw.Text('Photos',
+                    style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                pw.SizedBox(height: 6),
+                ...imgWidgets,
+              ],
+            ]));
     return doc.save();
   }
 
@@ -382,9 +382,7 @@ Future<Uint8List?> _fetchBytes(Map upload) async {
   final url = (upload['url'] ?? '').toString();
   try {
     if (path.isNotEmpty) {
-      return await FirebaseStorage.instance
-          .ref(path)
-          .getData(10 * 1024 * 1024);
+      return await FirebaseStorage.instance.ref(path).getData(10 * 1024 * 1024);
     }
     if (url.isNotEmpty) {
       return await FirebaseStorage.instance
@@ -493,9 +491,17 @@ class _PhotoTileState extends State<_PhotoTile> {
   Future<void> _load() async {
     try {
       final bytes = await _fetchBytes(widget.upload);
-      if (mounted) setState(() { _bytes = bytes; _loading = false; });
+      if (mounted)
+        setState(() {
+          _bytes = bytes;
+          _loading = false;
+        });
     } catch (_) {
-      if (mounted) setState(() { _loading = false; _error = true; });
+      if (mounted)
+        setState(() {
+          _loading = false;
+          _error = true;
+        });
     }
   }
 
@@ -524,8 +530,8 @@ class _PhotoTileState extends State<_PhotoTile> {
               child: IconButton(
                 icon: const Icon(Icons.close_rounded, color: PFColors.ink),
                 onPressed: () => Navigator.pop(context),
-                style: IconButton.styleFrom(
-                    backgroundColor: PFColors.surfaceHigh),
+                style:
+                    IconButton.styleFrom(backgroundColor: PFColors.surfaceHigh),
               ),
             ),
           ],

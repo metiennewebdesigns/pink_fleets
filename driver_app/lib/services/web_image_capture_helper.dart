@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:html' as html;
@@ -76,7 +78,8 @@ class WebImageCaptureHelper {
     input.click();
 
     try {
-      return await completer.future.timeout(const Duration(seconds: 60), onTimeout: () => null);
+      return await completer.future
+          .timeout(const Duration(seconds: 60), onTimeout: () => null);
     } finally {
       await sub.cancel();
       input.remove();

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:html' as html;
@@ -7,10 +9,12 @@ class WebPickedFile {
   final String name;
   final String? contentType;
 
-  const WebPickedFile({required this.bytes, required this.name, this.contentType});
+  const WebPickedFile(
+      {required this.bytes, required this.name, this.contentType});
 }
 
-Future<WebPickedFile?> _pick({required String accept, required bool capture}) async {
+Future<WebPickedFile?> _pick(
+    {required String accept, required bool capture}) async {
   final input = html.FileUploadInputElement()
     ..accept = accept
     ..multiple = false;
@@ -51,7 +55,8 @@ Future<WebPickedFile?> _pick({required String accept, required bool capture}) as
 
   input.click();
 
-  return completer.future.timeout(const Duration(seconds: 30), onTimeout: () => null);
+  return completer.future
+      .timeout(const Duration(seconds: 30), onTimeout: () => null);
 }
 
 Future<WebPickedFile?> pickCapturedImageOnWeb() {

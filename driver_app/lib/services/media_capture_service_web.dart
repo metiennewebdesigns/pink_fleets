@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -69,7 +71,8 @@ class MediaCaptureService {
     return null;
   }
 
-  Future<Uint8List?> _readFileBytes(html.File file, {required bool preferDataUrl}) async {
+  Future<Uint8List?> _readFileBytes(html.File file,
+      {required bool preferDataUrl}) async {
     if (preferDataUrl) {
       final d = await _readAsDataUrlBytes(file);
       if (d != null && d.isNotEmpty) return d;
@@ -144,7 +147,7 @@ class MediaCaptureService {
     Future<void> handleSelection() async {
       if (completer.isCompleted) return;
       final files = input.files;
-      final file = (files != null && files.length > 0) ? files[0] : null;
+      final file = (files != null && files.isNotEmpty) ? files[0] : null;
       if (file == null) {
         return;
       }
@@ -155,7 +158,8 @@ class MediaCaptureService {
       if (bytes != null && bytes.isNotEmpty) {
         final name = file.name.isNotEmpty ? file.name : _fallbackName(type);
         final contentType = file.type.isEmpty ? null : file.type;
-        final extension = _extensionFromName(name, type == MediaCaptureType.image ? 'jpg' : 'mp4');
+        final extension = _extensionFromName(
+            name, type == MediaCaptureType.image ? 'jpg' : 'mp4');
 
         completeIfNeeded(
           CapturedMedia(
@@ -184,7 +188,7 @@ class MediaCaptureService {
     filePollTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
       if (completer.isCompleted) return;
       final files = input.files;
-      final hasFile = files != null && files.length > 0;
+      final hasFile = files != null && files.isNotEmpty;
       if (hasFile) {
         handleSelection();
       }
@@ -196,7 +200,7 @@ class MediaCaptureService {
       await Future<void>.delayed(const Duration(milliseconds: 500));
       if (completer.isCompleted) return;
       final files = input.files;
-      final hasFile = files != null && files.length > 0;
+      final hasFile = files != null && files.isNotEmpty;
       if (hasFile && !sawAnyFile) {
         handleSelection();
       }
@@ -205,7 +209,8 @@ class MediaCaptureService {
     input.click();
 
     try {
-      return await completer.future.timeout(const Duration(seconds: 45), onTimeout: () => null);
+      return await completer.future
+          .timeout(const Duration(seconds: 45), onTimeout: () => null);
     } finally {
       await changeSub.cancel();
       await inputSub.cancel();
