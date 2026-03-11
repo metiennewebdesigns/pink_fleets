@@ -22,6 +22,26 @@ class DriverTripScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e, st) {
+      debugPrint('[DRIVER TRIP] build crash: $e');
+      debugPrint('[DRIVER TRIP] stack: $st');
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Something went wrong loading this trip.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     Color statusColor(String status) {
       switch (status) {
         case 'in_progress':
@@ -45,6 +65,23 @@ class DriverTripScreen extends StatelessWidget {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: _ref.snapshots(),
         builder: (context, snap) {
+          if (snap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Failed to load trip: ${snap.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!(snap.data?.exists ?? false)) {
+            return const Center(child: Text('Trip not found'));
+          }
           final d = snap.data?.data() ?? {};
           final status = (d['status'] ?? 'unknown').toString();
           final statusC = statusColor(status);

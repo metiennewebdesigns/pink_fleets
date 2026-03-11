@@ -137,6 +137,26 @@ class TripDetail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    try {
+      return _buildContent(context, ref);
+    } catch (e, st) {
+      debugPrint('[TRIP DETAIL] build crash: $e');
+      debugPrint('[TRIP DETAIL] stack: $st');
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Something went wrong loading this trip.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref) {
     final db = ref.watch(firestoreProvider);
     final refDoc = db.collection('bookings').doc(bookingId);
     final bookingPrivateRef = db.collection('bookings_private').doc(bookingId);
@@ -161,6 +181,20 @@ class TripDetail extends ConsumerWidget {
         child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: settingsRef.snapshots(),
           builder: (context, settingsSnap) {
+            if (settingsSnap.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Failed to load trip settings: ${settingsSnap.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+            if (!settingsSnap.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
             final settings = settingsSnap.data?.data() ?? {};
             final grace = (settings['overtimeGraceMinutes'] as num?)?.toInt() ??
                 graceMinutes;
@@ -187,14 +221,18 @@ class TripDetail extends ConsumerWidget {
                     rawStatus == 'driver_assigned' ? 'accepted' : rawStatus;
                 final c = _statusColor(status);
 
-                final assigned = (d['assigned'] as Map<String, dynamic>?) ?? {};
+                final assigned = (d['assigned'] is Map)
+                    ? Map<String, dynamic>.from(d['assigned'] as Map)
+                    : <String, dynamic>{};
                 final assignedDriverId =
                     (assigned['driverId'] ?? '').toString();
 
                 final scheduledEndTs = d['scheduledEndAt'] as Timestamp?;
                 final scheduledEnd = scheduledEndTs?.toDate();
 
-                final overtime = d['overtime'] as Map<String, dynamic>?;
+                final overtime = (d['overtime'] is Map)
+                    ? Map<String, dynamic>.from(d['overtime'] as Map)
+                    : null;
                 final overtimeMinutes = overtime?['minutes'] ?? 0;
                 final overtimeAmount = overtime?['amount'] ?? 0;
 

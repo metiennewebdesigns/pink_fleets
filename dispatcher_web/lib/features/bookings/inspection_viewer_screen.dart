@@ -50,11 +50,33 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e, st) {
+      debugPrint('[INSPECTION VIEWER] build crash: $e');
+      debugPrint('[INSPECTION VIEWER] stack: $st');
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Something went wrong loading this inspection.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     final docRef = FirebaseFirestore.instance
         .collection('bookings')
         .doc(widget.bookingId)
         .collection('driver_inspections')
         .doc(widget.stage);
+    final shortBookingId =
+        widget.bookingId.length > 8 ? widget.bookingId.substring(0, 8) : widget.bookingId;
 
     return Scaffold(
       backgroundColor: PFColors.canvas,
@@ -75,7 +97,7 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
               style: PFTypography.titleLarge,
             ),
             Text(
-              'Booking ${widget.bookingId.substring(0, 8)}',
+              'Booking $shortBookingId',
               style: PFTypography.bodySmall,
             ),
           ],
@@ -104,6 +126,17 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: docRef.snapshots(),
         builder: (context, snap) {
+          if (snap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Failed to load inspection: ${snap.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -117,24 +150,32 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
             );
           }
 
-          final data = snap.data!.data()!;
-          final notes = (data['notes'] ?? '').toString();
-          final checklist = (data['checklist'] as Map<String, dynamic>?) ?? {};
-          final uploads = (data['uploads'] as List?)?.cast<Map>() ?? [];
-          final updatedAt = _fmtTs(data['updatedAt']);
+          try {
+            final data = snap.data!.data()!;
+            final notes = (data['notes'] ?? '').toString();
+            final checklist = (data['checklist'] is Map)
+                ? Map<String, dynamic>.from(data['checklist'] as Map)
+                : <String, dynamic>{};
+            final uploads = (data['uploads'] is List)
+                ? (data['uploads'] as List)
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList()
+                : <Map<String, dynamic>>[];
+            final updatedAt = _fmtTs(data['updatedAt']);
 
-          final images = uploads
-              .where((u) =>
-                  _isImage((u['name'] ?? '').toString()) ||
-                  (u['type'] ?? '').toString().startsWith('image'))
-              .toList();
-          final videos = uploads
-              .where((u) =>
-                  _isVideo((u['name'] ?? '').toString()) ||
-                  (u['type'] ?? '').toString().startsWith('video'))
-              .toList();
+            final images = uploads
+                .where((u) =>
+                    _isImage((u['name'] ?? '').toString()) ||
+                    (u['type'] ?? '').toString().startsWith('image'))
+                .toList();
+            final videos = uploads
+                .where((u) =>
+                    _isVideo((u['name'] ?? '').toString()) ||
+                    (u['type'] ?? '').toString().startsWith('video'))
+                .toList();
 
-          return SingleChildScrollView(
+            return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
                 PFSpacing.base, PFSpacing.sm, PFSpacing.base, PFSpacing.xxxl),
             child: ConstrainedBox(
@@ -234,7 +275,20 @@ class _InspectionViewerScreenState extends State<InspectionViewerScreen> {
                 ],
               ),
             ),
-          );
+            );
+          } catch (e, st) {
+            debugPrint('[INSPECTION VIEWER] render error=$e');
+            debugPrint('[INSPECTION VIEWER] render stack=$st');
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Unable to render this inspection: $e',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
         },
       ),
     );

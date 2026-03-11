@@ -38,6 +38,7 @@ class _BookingLiveScreenState extends State<BookingLiveScreen> {
   bool _bookingLoaded = false;
   bool _bookingMissing = false;
   Timer? _bookingTimeout;
+  int _loadVersion = 0;
   // <<< END ADDED
 
   String? _resolveBookingId(BuildContext context) {
@@ -131,8 +132,124 @@ class _BookingLiveScreenState extends State<BookingLiveScreen> {
       _forceTimeout = false;
       _bookingLoaded = false;
       _bookingMissing = false;
+      _loadVersion++;
     });
     _startBookingTimeout();
+  }
+
+  Map<String, String> _routeDebugInfo(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return {
+      'widget.bookingId': widget.bookingId ?? 'NULL',
+      'resolvedBookingId': _resolveBookingId(context) ?? 'NULL',
+      'routeName': ModalRoute.of(context)?.settings.name ?? 'NULL',
+      'argumentsType': args?.runtimeType.toString() ?? 'NULL',
+      'uri': Uri.base.toString(),
+    };
+  }
+
+  Widget _buildDiagnosticBody(
+    BuildContext context, {
+    required String title,
+    String? bookingId,
+    Object? error,
+    String? route,
+    VoidCallback? onRetry,
+  }) {
+    final routeInfo = _routeDebugInfo(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (error != null) ...[
+              const SizedBox(height: 12),
+              Text('$error', textAlign: TextAlign.center),
+            ],
+            const SizedBox(height: 16),
+            Text(
+              'bookingId: ${bookingId ?? 'NULL'}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: PFColors.muted, fontSize: 12),
+            ),
+            if (route != null)
+              Text(
+                'route: $route',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: PFColors.muted, fontSize: 12),
+              ),
+            Text(
+              'resolved: ${routeInfo['resolvedBookingId']}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: PFColors.muted, fontSize: 12),
+            ),
+            Text(
+              'routeName: ${routeInfo['routeName']}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: PFColors.muted, fontSize: 12),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _loadBookingDoc(
+    String bookingId,
+  ) async {
+    debugPrint('[LIVE BOOKING] destination data fetch started bookings/$bookingId');
+    final ref = _firestore.collection('bookings').doc(bookingId);
+    Object? lastError;
+    StackTrace? lastStack;
+    for (var i = 0; i < 5; i++) {
+      try {
+        final snap = await ref.get();
+        debugPrint(
+          '[LIVE BOOKING] destination data fetch success attempt=$i exists=${snap.exists}',
+        );
+        return snap;
+      } catch (e, st) {
+        lastError = e;
+        lastStack = st;
+        debugPrint('[LIVE BOOKING] destination data fetch failure attempt=$i error=$e');
+        debugPrint('[LIVE BOOKING] destination data fetch stack=$st');
+        await Future.delayed(const Duration(milliseconds: 250));
+      }
+    }
+    debugPrint('[LIVE BOOKING] destination data fetch final failure=$lastError');
+    if (lastError != null && lastStack != null) {
+      Error.throwWithStackTrace(lastError, lastStack);
+    }
+    throw Exception('Unknown booking load failure');
+  }
+
+  Future<Map<String, dynamic>> _loadPrivateBookingData(String bookingId) async {
+    debugPrint('[LIVE BOOKING] private data fetch started bookings_private/$bookingId');
+    try {
+      final snap =
+          await _firestore.collection('bookings_private').doc(bookingId).get();
+      debugPrint(
+        '[LIVE BOOKING] private data fetch success exists=${snap.exists}',
+      );
+      return snap.data() ?? <String, dynamic>{};
+    } catch (e, st) {
+      debugPrint('[LIVE BOOKING] private data fetch failure=$e');
+      debugPrint('[LIVE BOOKING] private data fetch stack=$st');
+      rethrow;
+    }
   }
 
   String _normStatus(dynamic raw) {
@@ -515,6 +632,41 @@ Widget _glassCard({required Widget child, Color? borderColor}) {
   }
   // <<< END ADDED
 
+  String? _bookingFutureKey;
+  Future<DocumentSnapshot<Map<String, dynamic>>>? _bookingFuture;
+  String? _privateFutureKey;
+  Future<Map<String, dynamic>>? _privateFuture;
+
+  Map<String, dynamic> _safeMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) {
+      return raw.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return <String, dynamic>{};
+  }
+
+  double? _asDouble(dynamic raw) => raw is num ? raw.toDouble() : null;
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _bookingFutureFor(
+    String bookingId,
+  ) {
+    final key = '$bookingId-$_loadVersion';
+    if (_bookingFuture == null || _bookingFutureKey != key) {
+      _bookingFutureKey = key;
+      _bookingFuture = _loadBookingDoc(bookingId);
+    }
+    return _bookingFuture!;
+  }
+
+  Future<Map<String, dynamic>> _privateBookingFutureFor(String bookingId) {
+    final key = '$bookingId-$_loadVersion';
+    if (_privateFuture == null || _privateFutureKey != key) {
+      _privateFutureKey = key;
+      _privateFuture = _loadPrivateBookingData(bookingId);
+    }
+    return _privateFuture!;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -524,9 +676,46 @@ Widget _glassCard({required Widget child, Color? borderColor}) {
   @override
   Widget build(BuildContext context) {
     final bookingId = _resolveBookingId(context);
+    debugPrint('[LIVE BOOKING] build start');
+    debugPrint('[LIVE BOOKING] route bookingId=$bookingId');
+    try {
+      return _buildContent(context);
+    } catch (e, st) {
+      debugPrint('[LIVE BOOKING] build crash: $e');
+      debugPrint('[LIVE BOOKING] stack: $st');
+      return Scaffold(
+        backgroundColor: PFColors.canvas,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Live booking screen failed to render.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Text('$e', textAlign: TextAlign.center),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => setState(() {}),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final bookingId = _resolveBookingId(context);
     final bg = PFColors.canvas;
 
-    if (bookingId == null) {
+    if (bookingId == null || bookingId.isEmpty) {
       return Scaffold(
         backgroundColor: bg,
         appBar: AppBar(
@@ -551,9 +740,6 @@ Widget _glassCard({required Widget child, Color? borderColor}) {
       );
     }
 
-    final bookingDoc = _firestore.collection('bookings').doc(bookingId);
-    final bookingPrivateDoc = _firestore.collection('bookings_private').doc(bookingId);
-
     return Scaffold(
       backgroundColor: PFColors.canvas,
       appBar: AppBar(
@@ -569,429 +755,537 @@ Widget _glassCard({required Widget child, Color? borderColor}) {
           child: Container(height: 1, color: PFColors.border),
         ),
       ),
-      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: bookingDoc.snapshots(),
+      body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        key: ValueKey('booking-$bookingId-$_loadVersion'),
+        future: _bookingFutureFor(bookingId),
         builder: (context, bookingSnap) {
-          debugPrint('[LIVE BOOKING] route bookingId=$bookingId');
-          debugPrint('[LIVE BOOKING] reading bookings/$bookingId');
-          debugPrint('[LIVE BOOKING] connection=${bookingSnap.connectionState}');
-          debugPrint('[LIVE BOOKING] hasData=${bookingSnap.hasData}');
-          debugPrint('[LIVE BOOKING] exists=${bookingSnap.data?.exists}');
-          debugPrint('[LIVE BOOKING] error=${bookingSnap.error}');
+          debugPrint(
+            '[LIVE BOOKING] booking fetch state=${bookingSnap.connectionState}',
+          );
+          debugPrint('[LIVE BOOKING] booking hasData=${bookingSnap.hasData}');
+          debugPrint('[LIVE BOOKING] booking exists=${bookingSnap.data?.exists}');
+          debugPrint('[LIVE BOOKING] booking error=${bookingSnap.error}');
+          try {
+            final hasLiveData =
+                bookingSnap.hasData && (bookingSnap.data?.exists ?? false);
+            if (_bookingMissing && !hasLiveData) {
+              return _buildDiagnosticBody(
+                context,
+                title: 'Booking not found',
+                bookingId: bookingId,
+                route: '/booking/live/$bookingId',
+                onRetry: _retryBookingLoad,
+              );
+            }
 
-          if (bookingSnap.hasError) {
-            return Center(child: Text('Error loading booking: ${bookingSnap.error}'));
-          }
-
-          // Only show timeout if data has genuinely not arrived.
-          // If the stream has delivered the doc (even after the timer fired),
-          // skip the timeout gate so _markBookingLoaded() is reached below.
-          final hasLiveData = bookingSnap.hasData && (bookingSnap.data?.exists ?? false);
-          if (_bookingMissing && !hasLiveData) {
-            return const Center(child: Text('Booking not found'));
-          }
-
-          if (_forceTimeout && !_bookingLoaded && !hasLiveData) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Loading booking took too long.',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('Tap below to retry.'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _retryBookingLoad,
-                      child: const Text('Retry'),
-                    ),
-                  ],
+            if (_forceTimeout && !_bookingLoaded && !hasLiveData) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Loading booking took too long.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Tap below to retry.'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _retryBookingLoad,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              );
+            }
+
+            if (bookingSnap.connectionState == ConnectionState.waiting &&
+                !_forceTimeout &&
+                !_bookingLoaded) {
+              debugPrint('[LIVE BOOKING] waiting for booking $bookingId');
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (bookingSnap.hasError) {
+              return _buildDiagnosticBody(
+                context,
+                title: 'Failed to load booking.',
+                bookingId: bookingId,
+                route: '/booking/live/$bookingId',
+                error: bookingSnap.error,
+                onRetry: _retryBookingLoad,
+              );
+            }
+
+            if (!bookingSnap.hasData || !bookingSnap.data!.exists) {
+              _markBookingMissing();
+              return _buildDiagnosticBody(
+                context,
+                title: 'Booking not found',
+                bookingId: bookingId,
+                route: '/booking/live/$bookingId',
+                onRetry: _retryBookingLoad,
+              );
+            }
+
+            _markBookingLoaded();
+
+            final booking = bookingSnap.data!.data() ?? <String, dynamic>{};
+            return _buildLoadedBooking(context, bookingId, booking);
+          } catch (e, st) {
+            debugPrint('[LIVE BOOKING] render error=$e');
+            debugPrint('[LIVE BOOKING] render stack=$st');
+            return _buildDiagnosticBody(
+              context,
+              title: 'Something went wrong loading this booking.',
+              bookingId: bookingId,
+              route: '/booking/live/$bookingId',
+              error: e,
+              onRetry: _retryBookingLoad,
             );
           }
+        },
+      ),
+    );
+  }
+  
+  Widget _buildLoadedBooking(
+    BuildContext context,
+    String bookingId,
+    Map<String, dynamic> booking,
+  ) {
+    final status = _normStatus(booking['status'] ?? 'accepted');
+    final assigned = _safeMap(booking['assigned']);
+    final riderInfo = _safeMap(booking['riderInfo']);
+    final overtime = _safeMap(booking['overtime']);
+    final driverId = (booking['driverId'] ?? assigned['driverId'] ?? '')
+        .toString()
+        .trim();
+    final vehicleId = (assigned['vehicleId'] ?? '').toString().trim();
+    final adminDecision = (booking['adminDecision'] ?? '').toString().trim();
+    final canCancel =
+        status == 'pending' || status == 'dispatching' || status == 'offered';
 
-          if (bookingSnap.connectionState == ConnectionState.waiting &&
-              !_forceTimeout &&
-              !_bookingLoaded) {
-            debugPrint('[LIVE BOOKING] waiting for booking $bookingId');
-            return const Center(child: CircularProgressIndicator());
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _privateBookingFutureFor(bookingId),
+      builder: (context, privSnap) {
+        debugPrint(
+          '[LIVE BOOKING] private data fetch state=${privSnap.connectionState}',
+        );
+        debugPrint('[LIVE BOOKING] private hasData=${privSnap.hasData}');
+        debugPrint('[LIVE BOOKING] private error=${privSnap.error}');
+        try {
+          final priv =
+              privSnap.hasError ? <String, dynamic>{} : (privSnap.data ?? {});
+          final paymentStatus = (priv['paymentStatus'] ?? 'unknown').toString();
+          final pricingSnapshot = _safeMap(priv['pricingSnapshot']);
+          final total = pricingSnapshot['total'] as num?;
+          final isPaid = paymentStatus.toLowerCase() == 'paid';
+
+          final pg = booking['pickupGeo'] ?? priv['pickupGeo'];
+          final dg = booking['dropoffGeo'] ?? priv['dropoffGeo'];
+          double? oLat;
+          double? oLng;
+          final ol = assigned['driverLocation'] ?? booking['driverLocation'];
+          if (ol is GeoPoint) {
+            oLat = ol.latitude;
+            oLng = ol.longitude;
+          } else {
+            final m = _safeMap(ol);
+            oLat = _asDouble(m['lat']) ?? _asDouble(m['latitude']);
+            oLng = _asDouble(m['lng']) ?? _asDouble(m['longitude']);
           }
 
-          if (!bookingSnap.hasData || !bookingSnap.data!.exists) {
-            _markBookingMissing();
-            return const Center(child: Text('Booking not found'));
+          double? dLat;
+          double? dLng;
+          GeoPoint? pickupGeo;
+          GeoPoint? dropoffGeo;
+          final bookingPickupLat = _asDouble(booking['pickupLat']);
+          final bookingPickupLng = _asDouble(booking['pickupLng']);
+          final bookingDropoffLat = _asDouble(booking['dropoffLat']);
+          final bookingDropoffLng = _asDouble(booking['dropoffLng']);
+
+          if (pg is GeoPoint) {
+            dLat = pg.latitude;
+            dLng = pg.longitude;
+            pickupGeo = pg;
+          } else {
+            final m = _safeMap(pg);
+            dLat = _asDouble(m['lat']);
+            dLng = _asDouble(m['lng']);
+            if (dLat != null && dLng != null) {
+              pickupGeo = GeoPoint(dLat, dLng);
+            }
           }
 
-          _markBookingLoaded();
+          if (dg is GeoPoint) {
+            dropoffGeo = dg;
+          } else {
+            final m = _safeMap(dg);
+            final lat = _asDouble(m['lat']);
+            final lng = _asDouble(m['lng']);
+            if (lat != null && lng != null) {
+              dropoffGeo = GeoPoint(lat, lng);
+            }
+          }
 
-          final booking = bookingSnap.data!.data() ?? {};
-          final status = _normStatus(booking['status']);
-
-          final assigned = (booking['assigned'] is Map)
-              ? (booking['assigned'] as Map).cast<String, dynamic>()
-              : <String, dynamic>{};
-
-          final riderInfo = (booking['riderInfo'] is Map)
-              ? (booking['riderInfo'] as Map).cast<String, dynamic>()
-              : <String, dynamic>{};
-
-          final overtime = (booking['overtime'] is Map)
-              ? (booking['overtime'] as Map).cast<String, dynamic>()
-              : <String, dynamic>{};
-
-          final driverId = (assigned['driverId'] ?? '').toString();
-          final vehicleId = (assigned['vehicleId'] ?? '').toString();
-          final adminDecision = (booking['adminDecision'] ?? '').toString();
-
-          final canCancel = status == 'pending' ||
-              status == 'dispatching' ||
-              status == 'offered';
-
-          return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: bookingPrivateDoc.snapshots(),
-            builder: (context, privSnap) {
-              final priv = privSnap.data?.data() ?? {};
-              final paymentStatus = (priv['paymentStatus'] ?? 'unknown').toString();
-              final pricingSnapshot = (priv['pricingSnapshot'] is Map)
-                  ? (priv['pricingSnapshot'] as Map).cast<String, dynamic>()
-                  : <String, dynamic>{};
-              final total = pricingSnapshot['total'] as num?;
-
-              final isPaid = paymentStatus.toLowerCase() == 'paid';
-
-              // >>> ADDED: start/stop ETA loop (real ETA) when possible
-              final pg = priv['pickupGeo'];
-              final dg = priv['dropoffGeo'];
-              double? oLat;
-              double? oLng;
-              final ol = assigned['driverLocation'] ?? booking['driverLocation'];
-              if (ol is GeoPoint) {
-                oLat = ol.latitude;
-                oLng = ol.longitude;
-              } else if (ol is Map) {
-                final m = Map<String, dynamic>.from(ol);
-                oLat = (m['lat'] as num?)?.toDouble() ?? (m['latitude'] as num?)?.toDouble();
-                oLng = (m['lng'] as num?)?.toDouble() ?? (m['longitude'] as num?)?.toDouble();
-              }
-              double? dLat;
-              double? dLng;
-              GeoPoint? pickupGeo;
-              GeoPoint? dropoffGeo;
-              final bookingPickupLat =
-                  (booking['pickupLat'] as num?)?.toDouble();
-              final bookingPickupLng =
-                  (booking['pickupLng'] as num?)?.toDouble();
-              final bookingDropoffLat =
-                  (booking['dropoffLat'] as num?)?.toDouble();
-              final bookingDropoffLng =
-                  (booking['dropoffLng'] as num?)?.toDouble();
-              if (pg is GeoPoint) {
-                dLat = pg.latitude;
-                dLng = pg.longitude;
-                pickupGeo = pg;
-              } else if (pg is Map) {
-                final m = Map<String, dynamic>.from(pg);
-                dLat = (m['lat'] as num?)?.toDouble();
-                dLng = (m['lng'] as num?)?.toDouble();
-                if (dLat != null && dLng != null) {
-                  pickupGeo = GeoPoint(dLat, dLng);
-                }
-              }
-
-              if (dg is GeoPoint) {
-                dropoffGeo = dg;
-              } else if (dg is Map) {
-                final m = Map<String, dynamic>.from(dg);
-                final lat = (m['lat'] as num?)?.toDouble();
-                final lng = (m['lng'] as num?)?.toDouble();
-                if (lat != null && lng != null) {
-                  dropoffGeo = GeoPoint(lat, lng);
-                }
-              }
-
-              pickupGeo ??= (bookingPickupLat != null &&
-                      bookingPickupLng != null)
-                  ? GeoPoint(bookingPickupLat, bookingPickupLng)
-                  : null;
-              dropoffGeo ??= (bookingDropoffLat != null &&
-                      bookingDropoffLng != null)
+          pickupGeo ??= (bookingPickupLat != null && bookingPickupLng != null)
+              ? GeoPoint(bookingPickupLat, bookingPickupLng)
+              : null;
+          dropoffGeo ??=
+              (bookingDropoffLat != null && bookingDropoffLng != null)
                   ? GeoPoint(bookingDropoffLat, bookingDropoffLng)
                   : null;
 
-              dLat ??= pickupGeo?.latitude;
-              dLng ??= pickupGeo?.longitude;
+          dLat ??= pickupGeo?.latitude;
+          dLng ??= pickupGeo?.longitude;
 
-              if (isPaid && (status == 'accepted' || status == 'en_route')) {
-                final oLatVal = oLat;
-                final oLngVal = oLng;
-                final dLatVal = dLat;
-                final dLngVal = dLng;
-                if (oLatVal != null && oLngVal != null && dLatVal != null && dLngVal != null) {
-                  _ensureEtaLoop(oLat: oLatVal, oLng: oLngVal, dLat: dLatVal, dLng: dLngVal);
-                } else {
-                  _stopEtaLoop();
-                }
-              } else {
-                _stopEtaLoop();
-              }
-              // <<< END ADDED
+          if (isPaid && (status == 'accepted' || status == 'en_route')) {
+            final oLatVal = oLat;
+            final oLngVal = oLng;
+            final dLatVal = dLat;
+            final dLngVal = dLng;
+            if (oLatVal != null &&
+                oLngVal != null &&
+                dLatVal != null &&
+                dLngVal != null) {
+              _ensureEtaLoop(
+                oLat: oLatVal,
+                oLng: oLngVal,
+                dLat: dLatVal,
+                dLng: dLngVal,
+              );
+            } else {
+              _stopEtaLoop();
+            }
+          } else {
+            _stopEtaLoop();
+          }
 
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: [
-                  if (!isPaid)
-                    _glassCard(
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            children: [
+              if (privSnap.hasError)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _glassCard(
+                    borderColor: PFColors.goldBase,
+                    child: const Text(
+                      'Some private booking details could not be loaded. Basic booking details are still available.',
+                      style: TextStyle(color: PFColors.inkSoft),
+                    ),
+                  ),
+                ),
+              if (!isPaid)
+                _glassCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Payment required',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: PFColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Complete payment to release dispatch and enable full live tracking.',
+                        style: TextStyle(color: PFColors.inkSoft, height: 1.25),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Pay Now is coming soon.'),
+                              ),
+                            );
+                          },
+                          child: const Text('Pay Now'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (!isPaid) const SizedBox(height: 10),
+              _luxStatusBanner(
+                bookingId: bookingId,
+                status: status,
+                isPaid: isPaid,
+                statusColor: _statusColor(status),
+              ),
+              const SizedBox(height: 10),
+              _glassCard(
+                child: Row(
+                  children: [
+                    _statusDot(_statusColor(status)),
+                    const SizedBox(width: 10),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Payment required',
-                            style: TextStyle(
+                          Text(
+                            _titleFromStatus(status),
+                            style: const TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.w900,
-                              color: PFColors.ink,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Complete payment to release dispatch and enable full live tracking.',
-                            style: TextStyle(color: PFColors.inkSoft, height: 1.25),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Pay Now is coming soon.')),
-                                );
-                              },
-                              child: const Text('Pay Now'),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Booking ID: $bookingId',
+                            style: const TextStyle(
+                              color: PFColors.muted,
+                              fontSize: 12,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  if (!isPaid) const SizedBox(height: 10),
-                  _luxStatusBanner(
-                    bookingId: bookingId,
-                    status: status,
-                    isPaid: isPaid,
-                    statusColor: _statusColor(status),
-                  ),
-                  const SizedBox(height: 10),
-                  _glassCard(
-                    child: Row(
-                      children: [
-                        _statusDot(_statusColor(status)),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    if (canCancel)
+                      TextButton(
+                        onPressed: () =>
+                            _showCancelDialog(context, bookingId, driverId),
+                        style: TextButton.styleFrom(
+                          foregroundColor: PFColors.danger,
+                        ),
+                        child: const Text('Cancel booking'),
+                      ),
+                  ],
+                ),
+              ),
+              _sectionTitle('Assignment'),
+              _glassCard(
+                child: Column(
+                  children: [
+                    _kv('Driver ID', driverId.isEmpty ? '—' : driverId),
+                    _kv('Vehicle ID', vehicleId.isEmpty ? '—' : vehicleId),
+                    _kv(
+                      'Admin Decision',
+                      adminDecision.isEmpty ? '—' : adminDecision,
+                    ),
+                    if (driverId.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      const Divider(color: PFColors.border),
+                      const SizedBox(height: 10),
+                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream:
+                            _firestore.collection('drivers').doc(driverId).snapshots(),
+                        builder: (context, snap) {
+                          if (snap.hasError) {
+                            return Column(
+                              children: const [
+                                SizedBox(height: 4),
+                                Text(
+                                  'Unable to load driver details.',
+                                  style: TextStyle(
+                                    color: PFColors.muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          if (!snap.hasData) {
+                            return Column(
+                              children: [
+                                _kv('Driver Name', 'Loading...'),
+                                _kv('Driver Phone', 'Loading...'),
+                              ],
+                            );
+                          }
+                          final d = snap.data?.data() ?? {};
+                          final first =
+                              (d['firstName'] ?? d['name'] ?? '').toString().trim();
+                          final last = (d['lastName'] ?? '').toString().trim();
+                          final phone = (d['phone'] ?? '').toString().trim();
+                          final name = ('$first $last').trim();
+                          return Column(
                             children: [
-                              Text(
-                                _titleFromStatus(status),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Booking ID: $bookingId',
-                                style: const TextStyle(
-                                  color: PFColors.muted,
-                                  fontSize: 12,
-                                ),
-                              ),
+                              _kv('Driver Name', name.isEmpty ? '—' : name),
+                              _kv('Driver Phone', phone.isEmpty ? '—' : phone),
                             ],
-                          ),
-                        ),
-                        if (canCancel)
-                          TextButton(
-                            onPressed: () => _showCancelDialog(
-                                context, bookingId, driverId),
-                            style: TextButton.styleFrom(
-                              foregroundColor: PFColors.danger,
-                            ),
-                            child: const Text('Cancel booking'),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  _sectionTitle('Assignment'),
-                  _glassCard(
-                    child: Column(
-                      children: [
-                        _kv('Driver ID', driverId.isEmpty ? '—' : driverId),
-                        _kv('Vehicle ID', vehicleId.isEmpty ? '—' : vehicleId),
-                        _kv('Admin Decision', adminDecision.isEmpty ? '—' : adminDecision),
-
-                        // >>> ADDED: Driver details (live lookup)
-                        if (driverId.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          const Divider(color: PFColors.border),
-                          const SizedBox(height: 10),
-                          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                            stream: _firestore.collection('drivers').doc(driverId).snapshots(),
-                            builder: (context, snap) {
-                              final d = snap.data?.data() ?? {};
-                              final first = (d['firstName'] ?? d['name'] ?? '').toString().trim();
-                              final last = (d['lastName'] ?? '').toString().trim();
-                              final phone = (d['phone'] ?? '').toString().trim();
-                              final name = ('$first $last').trim();
-                              return Column(
-                                children: [
-                                  _kv('Driver Name', name.isEmpty ? '—' : name),
-                                  _kv('Driver Phone', phone.isEmpty ? '—' : phone),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                        // <<< END ADDED
-
-                        // >>> ADDED: Vehicle details (live lookup)
-                        if (vehicleId.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          const Divider(color: PFColors.border),
-                          const SizedBox(height: 10),
-                          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                            stream: _firestore.collection('vehicles').doc(vehicleId).snapshots(),
-                            builder: (context, snap) {
-                              final v = snap.data?.data() ?? {};
-                              final year = (v['year'] ?? '').toString().trim();
-                              final make = (v['make'] ?? '').toString().trim();
-                              final model = (v['model'] ?? '').toString().trim();
-                              final plate = (v['plate'] ?? '').toString().trim();
-                              final label = [year, make, model].where((x) => x.isNotEmpty).join(' ').trim();
-                              return Column(
-                                children: [
-                                  _kv('Vehicle', label.isEmpty ? '—' : label),
-                                  _kv('Plate', plate.isEmpty ? '—' : plate),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                        // <<< END ADDED
-
-                      ],
-                    ),
-                  ),
-
-                  _sectionTitle('Rider'),
-                  _glassCard(
-                    child: Column(
-                      children: [
-                        _kv('Name', (riderInfo['name'] ?? '—').toString()),
-                        _kv('Email', (riderInfo['email'] ?? '—').toString()),
-                        _kv('Phone', (riderInfo['phone'] ?? '—').toString()),
-                      ],
-                    ),
-                  ),
-
-                  _sectionTitle('Timing'),
-                  _glassCard(
-                    child: Column(
-                      children: [
-                        _kv('Actual Start', _fmtTs(booking['actualStartAt'])),
-                        _kv('Actual End', _fmtTs(booking['actualEndAt'])),
-                        _kv('Updated', _fmtTs(booking['updatedAt'])),
-                        _kv('Created', _fmtTs(booking['createdAt'])),
-                      ],
-                    ),
-                  ),
-
-                  
-                  _sectionTitle('Live Map'),
-                  PFUberLiveMap(
-                    driverId: driverId.isNotEmpty ? driverId : null,
-                    initialDriverLatLng: (oLat != null && oLng != null)
-                        ? LatLng(oLat, oLng)
-                        : null,
-                    pickupGeo: pickupGeo,
-                    dropoffGeo: dropoffGeo,
-                    height: 280,
-                    bookingStatus: status,
-                    etaText: _etaText,
-                  ),
-                  _glassCard(
-                    child: Column(
-                      children: [
-                        _kv(
-                          'Driver location',
-                          oLat != null && oLng != null
-                              ? '${oLat.toStringAsFixed(5)}, ${oLng.toStringAsFixed(5)}'
-                              : '—',
-                        ),
-                        _kv(
-                          'Pickup location',
-                          dLat != null && dLng != null
-                              ? '${dLat.toStringAsFixed(5)}, ${dLng.toStringAsFixed(5)}'
-                              : '—',
-                        ),
-                        if (oLat == null && dLat == null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              'Map appears once a pickup location and/or driver location is available.',
-                              style: const TextStyle(color: PFColors.muted, fontSize: 12),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  _sectionTitle('Overtime'),
-                  _glassCard(
-                    child: Column(
-                      children: [
-                        _kv('Grace Minutes', (overtime['graceMinutes'] ?? '—').toString()),
-                        _kv('Minutes', (overtime['minutes'] ?? '—').toString()),
-                        _kv('Rate / Minute', (overtime['ratePerMinute'] ?? '—').toString()),
-                        _kv('Amount', (overtime['amount'] ?? '—').toString()),
-                        _kv('Computed', _fmtTs(overtime['computedAt'])),
-                      ],
-                    ),
-                  ),
-
-                  _sectionTitle('Payment'),
-                  _glassCard(
-                    child: Column(
-                      children: [
-                        _kv('Payment Status', paymentStatus),
-                        _kv('Total', _money(total, cents: true)),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                          );
+                        },
                       ),
+                    ],
+                    if (vehicleId.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      const Divider(color: PFColors.border),
+                      const SizedBox(height: 10),
+                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream:
+                            _firestore.collection('vehicles').doc(vehicleId).snapshots(),
+                        builder: (context, snap) {
+                          if (snap.hasError) {
+                            return Column(
+                              children: const [
+                                SizedBox(height: 4),
+                                Text(
+                                  'Unable to load vehicle details.',
+                                  style: TextStyle(
+                                    color: PFColors.muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          if (!snap.hasData) {
+                            return Column(
+                              children: [
+                                _kv('Vehicle', 'Loading...'),
+                                _kv('Plate', 'Loading...'),
+                              ],
+                            );
+                          }
+                          final v = snap.data?.data() ?? {};
+                          final year = (v['year'] ?? '').toString().trim();
+                          final make = (v['make'] ?? '').toString().trim();
+                          final model = (v['model'] ?? '').toString().trim();
+                          final plate = (v['plate'] ?? '').toString().trim();
+                          final label = [year, make, model]
+                              .where((x) => x.isNotEmpty)
+                              .join(' ')
+                              .trim();
+                          return Column(
+                            children: [
+                              _kv('Vehicle', label.isEmpty ? '—' : label),
+                              _kv('Plate', plate.isEmpty ? '—' : plate),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              _sectionTitle('Rider'),
+              _glassCard(
+                child: Column(
+                  children: [
+                    _kv('Name', (riderInfo['name'] ?? '—').toString()),
+                    _kv('Email', (riderInfo['email'] ?? '—').toString()),
+                    _kv('Phone', (riderInfo['phone'] ?? '—').toString()),
+                  ],
+                ),
+              ),
+              _sectionTitle('Timing'),
+              _glassCard(
+                child: Column(
+                  children: [
+                    _kv('Actual Start', _fmtTs(booking['actualStartAt'])),
+                    _kv('Actual End', _fmtTs(booking['actualEndAt'])),
+                    _kv('Updated', _fmtTs(booking['updatedAt'])),
+                    _kv('Created', _fmtTs(booking['createdAt'])),
+                  ],
+                ),
+              ),
+              _sectionTitle('Live Map'),
+              PFUberLiveMap(
+                driverId: driverId.isNotEmpty ? driverId : null,
+                initialDriverLatLng:
+                    (oLat != null && oLng != null) ? LatLng(oLat, oLng) : null,
+                pickupGeo: pickupGeo,
+                dropoffGeo: dropoffGeo,
+                height: 280,
+                bookingStatus: status,
+                etaText: _etaText,
+              ),
+              _glassCard(
+                child: Column(
+                  children: [
+                    _kv(
+                      'Driver location',
+                      oLat != null && oLng != null
+                          ? '${oLat.toStringAsFixed(5)}, ${oLng.toStringAsFixed(5)}'
+                          : '—',
                     ),
-                    child: const Text(
-                      'Support',
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                    _kv(
+                      'Pickup location',
+                      dLat != null && dLng != null
+                          ? '${dLat.toStringAsFixed(5)}, ${dLng.toStringAsFixed(5)}'
+                          : '—',
                     ),
+                    if (oLat == null && dLat == null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          'Map appears once a pickup location and/or driver location is available.',
+                          style: const TextStyle(
+                            color: PFColors.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              _sectionTitle('Overtime'),
+              _glassCard(
+                child: Column(
+                  children: [
+                    _kv(
+                      'Grace Minutes',
+                      (overtime['graceMinutes'] ?? '—').toString(),
+                    ),
+                    _kv('Minutes', (overtime['minutes'] ?? '—').toString()),
+                    _kv(
+                      'Rate / Minute',
+                      (overtime['ratePerMinute'] ?? '—').toString(),
+                    ),
+                    _kv('Amount', (overtime['amount'] ?? '—').toString()),
+                    _kv('Computed', _fmtTs(overtime['computedAt'])),
+                  ],
+                ),
+              ),
+              _sectionTitle('Payment'),
+              _glassCard(
+                child: Column(
+                  children: [
+                    _kv('Payment Status', paymentStatus),
+                    _kv('Total', _money(total, cents: true)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
-              );
-            },
+                ),
+                child: const Text(
+                  'Support',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
           );
-        },
-      ),
+        } catch (e, st) {
+          debugPrint('[LIVE BOOKING] private render error=$e');
+          debugPrint('[LIVE BOOKING] private render stack=$st');
+          return _buildDiagnosticBody(
+            context,
+            title: 'Unable to render full booking details.',
+            bookingId: bookingId,
+            route: '/booking/live/$bookingId',
+            error: e,
+            onRetry: _retryBookingLoad,
+          );
+        }
+      },
     );
   }
 }

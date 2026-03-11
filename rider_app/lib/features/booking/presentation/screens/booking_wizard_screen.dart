@@ -31,6 +31,9 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
   String? _activeBookingId;
   bool _isSubmitting = false;
   final bool _useFirestoreBookingCreate = false;
+  String? _submitErrorMessage;
+  String? _submitErrorRoute;
+  String? _submitErrorBookingId;
 
   // >>> ADDED: Add-Stop UI state
   final List<String> _stops = [];
@@ -249,6 +252,26 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e, st) {
+      debugPrint('[BOOKING SCREEN] build crash: $e');
+      debugPrint('[BOOKING SCREEN] stack: $st');
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Something went wrong loading the booking screen.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     final state = ref.watch(bookingControllerProvider);
     final ctrl = ref.read(bookingControllerProvider.notifier);
     final d = state.draft;
@@ -257,6 +280,24 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: settingsRef.snapshots(),
       builder: (context, settingsSnap) {
+        if (settingsSnap.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Failed to load booking settings: ${settingsSnap.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        }
+        if (!settingsSnap.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         final settings = settingsSnap.data?.data() ?? {};
         ctrl.applySettings(settings);
         final supportPhone = (settings['supportPhone'] ?? callPhoneNumber).toString();
@@ -458,13 +499,22 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                   // immediately so the bug is impossible to miss.
                   // All booking creation goes through createBookingHttp (HTTP).
                   // ────────────────────────────────────────────────────────────
+                  debugPrint('[BOOKING] submit pressed');
                   debugPrint('[PF] onPlaceBooking: HTTP path active — Firestore client writes DISABLED');
+                  if (mounted) {
+                    setState(() {
+                      _submitErrorMessage = null;
+                      _submitErrorRoute = null;
+                      _submitErrorBookingId = null;
+                    });
+                  }
 
                   if (!context.mounted) return;
 
                   final okLogin = await _ensureLoggedIn(context);
                   if (!okLogin) return;
                   if (!context.mounted) return;
+                  debugPrint('[BOOKING] validation passed');
 
                   showDialog(
                     context: context,
@@ -485,17 +535,20 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                     debugPrint('[BOOKING] vehicle=${d.vehicleType.name}');
                     debugPrint('[BOOKING] date=${d.scheduledStart}');
                     debugPrint('[BOOKING] durationHours=${d.durationHours}');
+                    debugPrint('[BOOKING] starting create booking');
                     // HTTP POST → createBookingHttp Cloud Function.
                     // booking_controller.createBooking() uses http.post with
                     // Authorization: Bearer <ID token>. Zero Firestore client writes.
                     final id = await ctrl.createBooking(markPaid: true);
+                    debugPrint('[BOOKING] create booking response=$id');
 
                     if (!context.mounted) return;
                     Navigator.of(context, rootNavigator: true).pop();
 
-                    if (id == null) {
+                    if (id == null || id.trim().isEmpty) {
+                      debugPrint('[BOOKING] bookingId invalid response=$id');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Booking returned null — check login/validation.')),
+                        const SnackBar(content: Text('Failed to create booking.')),
                       );
                       return;
                     }
@@ -519,15 +572,36 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
 
                     debugPrint('[BOOKING] navigating to /booking/live/$id');
                     if (!context.mounted) return;
-                    context.go('/booking/live/$id');
+                    final targetRoute = '/booking/live/$id';
+                    try {
+                      context.go(targetRoute);
+                    } catch (e, st) {
+                      debugPrint('[BOOKING] navigation error=$e');
+                      debugPrint('[BOOKING] navigation stack=$st');
+                      if (mounted) {
+                        setState(() {
+                          _submitErrorMessage = 'Navigation failed: $e';
+                          _submitErrorRoute = targetRoute;
+                          _submitErrorBookingId = id;
+                        });
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Navigation failed: $e')),
+                      );
+                    }
                   } catch (e, st) {
-                    debugPrint('[BOOKING] submit failed: $e');
-                    debugPrint('[BOOKING] stack: $st');
+                    debugPrint('[BOOKING] submit error=$e');
+                    debugPrint('[BOOKING] submit stack=$st');
 
                     if (!context.mounted) return;
                     Navigator.of(context, rootNavigator: true).pop();
 
                     if (mounted) {
+                      setState(() {
+                        _submitErrorMessage = e.toString();
+                        _submitErrorRoute = '/booking/live';
+                        _submitErrorBookingId = null;
+                      });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Booking failed: $e'),
@@ -664,6 +738,51 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                                       context.go('/booking/live/$_activeBookingId');
                                     },
                                     child: const Text('Resume'),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          if (_submitErrorMessage != null)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: PFColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: PFColors.danger.withValues(alpha: 0.55),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Booking flow error',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: PFColors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _submitErrorMessage!,
+                                    style: const TextStyle(color: PFColors.inkSoft),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Route: ${_submitErrorRoute ?? '—'}',
+                                    style: const TextStyle(
+                                      color: PFColors.muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Booking ID: ${_submitErrorBookingId ?? '—'}',
+                                    style: const TextStyle(
+                                      color: PFColors.muted,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),

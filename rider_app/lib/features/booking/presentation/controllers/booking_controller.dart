@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/booking_draft.dart';
 
@@ -278,13 +279,19 @@ class BookingController extends StateNotifier<BookingState> {
 
   Future<String?> createBooking({bool markPaid = true}) async {
     final d = state.draft;
+    debugPrint('[BOOKING CTRL] createBooking started');
 
     final ok = validateForQuote();
-    if (!ok) return null;
+    if (!ok) {
+      debugPrint('[BOOKING CTRL] validation failed: ${state.error}');
+      return null;
+    }
+    debugPrint('[BOOKING CTRL] validation passed');
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       state = state.copyWith(error: 'You must be logged in to book.');
+      debugPrint('[BOOKING CTRL] createBooking aborted: user is null');
       return null;
     }
 
@@ -292,6 +299,7 @@ class BookingController extends StateNotifier<BookingState> {
     final token = await user.getIdToken();
     if (token == null) {
       state = state.copyWith(error: 'Authentication token unavailable. Please sign out and back in.');
+      debugPrint('[BOOKING CTRL] createBooking aborted: token is null');
       return null;
     }
 
@@ -311,28 +319,41 @@ class BookingController extends StateNotifier<BookingState> {
       // 'stops':             d.stops, // Removed: BookingDraft has no 'stops' property
     });
 
-    final response = await http.post(
-      Uri.parse(_createBookingUrl),
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: payload,
-    );
+    try {
+      debugPrint('[BOOKING CTRL] createBooking POST $_createBookingUrl');
+      final response = await http.post(
+        Uri.parse(_createBookingUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: payload,
+      );
+      debugPrint('[BOOKING CTRL] createBooking status=${response.statusCode}');
+      debugPrint('[BOOKING CTRL] createBooking body=${response.body}');
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      final errBody = jsonDecode(response.body) as Map<String, dynamic>?;
-      final errMsg  = errBody?['error']?.toString() ?? 'booking-failed (${response.statusCode})';
-      state = state.copyWith(error: errMsg);
-      throw Exception(errMsg);
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final errBody = jsonDecode(response.body) as Map<String, dynamic>?;
+        final errMsg =
+            errBody?['error']?.toString() ?? 'booking-failed (${response.statusCode})';
+        state = state.copyWith(error: errMsg);
+        throw Exception(errMsg);
+      }
+
+      final respBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final bookingId = (respBody['bookingId'] ?? respBody['id'])
+          ?.toString()
+          .trim();
+      debugPrint('[BOOKING CTRL] createBooking bookingId=$bookingId');
+      if (bookingId == null || bookingId.isEmpty) return null;
+
+      state = state.copyWith(error: null);
+      return bookingId;
+    } catch (e, st) {
+      debugPrint('[BOOKING CTRL] createBooking error=$e');
+      debugPrint('[BOOKING CTRL] createBooking stack=$st');
+      rethrow;
     }
-
-    final respBody  = jsonDecode(response.body) as Map<String, dynamic>;
-    final bookingId = respBody['bookingId'] as String?;
-    if (bookingId == null || bookingId.isEmpty) return null;
-
-    state = state.copyWith(error: null);
-    return bookingId;
   }
 }
 

@@ -25,20 +25,53 @@ class QuoteScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ctrl = ref.read(bookingControllerProvider.notifier);
-    final state = ref.watch(bookingControllerProvider);
-    final d = state.draft;
+    try {
+      final ctrl = ref.read(bookingControllerProvider.notifier);
+      final state = ref.watch(bookingControllerProvider);
+      final d = state.draft;
 
-    final settingsRef = FirebaseFirestore.instance.collection('admin_settings').doc('app');
+      final settingsRef = FirebaseFirestore.instance.collection('admin_settings').doc('app');
 
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: settingsRef.snapshots(),
-      builder: (context, settingsSnap) {
-        final settings = settingsSnap.data?.data() ?? {};
-        ctrl.applySettings(settings);
-        final q = ctrl.computeQuoteBreakdown();
+      return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: settingsRef.snapshots(),
+        builder: (context, settingsSnap) {
+          if (settingsSnap.hasError) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Quote')),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Failed to load quote settings: ${settingsSnap.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }
+          if (!settingsSnap.hasData) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Quote')),
+              body: const Center(child: CircularProgressIndicator()),
+            );
+          }
 
-        return Scaffold(
+          final settings = settingsSnap.data?.data() ?? {};
+          ctrl.applySettings(settings);
+          final q = ctrl.computeQuoteBreakdown();
+          final billableHours = (q['billableHours'] as num?)?.toDouble() ?? 0;
+          final hourlyRate = (q['hourlyRate'] as num?)?.toDouble() ?? 0;
+          final base = (q['base'] as num?)?.toDouble() ?? 0;
+          final gratuity = (q['gratuity'] as num?)?.toDouble() ?? 0;
+          final fuel = (q['fuel'] as num?)?.toDouble() ?? 0;
+          final parking = (q['parking'] as num?)?.toDouble() ?? 0;
+          final tolls = (q['tolls'] as num?)?.toDouble() ?? 0;
+          final venue = (q['venue'] as num?)?.toDouble() ?? 0;
+          final fees = (q['fees'] as num?)?.toDouble() ?? 0;
+          final tax = (q['tax'] as num?)?.toDouble() ?? 0;
+          final total = (q['total'] as num?)?.toDouble() ?? 0;
+
+          return Scaffold(
           appBar: AppBar(title: const Text('Quote')),
           body: SafeArea(
             child: SingleChildScrollView(
@@ -64,20 +97,20 @@ class QuoteScreen extends ConsumerWidget {
                         Text('Start: ${formatDateTime(d.scheduledStart)}'),
                         const SizedBox(height: 16),
 
-                        _row('Billable Hours', q['billableHours']!.toStringAsFixed(2)),
-                        _row('Rate', '${money(q['hourlyRate']!)} / hour'),
+                        _row('Billable Hours', billableHours.toStringAsFixed(2)),
+                        _row('Rate', '${money(hourlyRate)} / hour'),
                         const Divider(height: 24),
 
-                        _row('Base', money(q['base']!)),
-                        _row('Gratuity (${ctrl.gratuityPct.toStringAsFixed(0)}%)', money(q['gratuity']!)),
-                        _row('Fuel Surcharge', money(q['fuel']!)),
+                        _row('Base', money(base)),
+                        _row('Gratuity (${ctrl.gratuityPct.toStringAsFixed(0)}%)', money(gratuity)),
+                        _row('Fuel Surcharge', money(fuel)),
                         const Divider(height: 24),
 
-                        if ((q['parking'] ?? 0) > 0) _row('Parking Fee', money(q['parking']!)),
-                        if ((q['tolls'] ?? 0) > 0) _row('Tolls', money(q['tolls']!)),
-                        if ((q['venue'] ?? 0) > 0) _row('Venue/Staging Fee', money(q['venue']!)),
-                        if ((q['fees'] ?? 0) > 0) _row('Fees Total', money(q['fees']!)),
-                        _row('Tax', money(q['tax']!)),
+                        if (parking > 0) _row('Parking Fee', money(parking)),
+                        if (tolls > 0) _row('Tolls', money(tolls)),
+                        if (venue > 0) _row('Venue/Staging Fee', money(venue)),
+                        if (fees > 0) _row('Fees Total', money(fees)),
+                        _row('Tax', money(tax)),
                         const SizedBox(height: 10),
 
                         Container(
@@ -87,7 +120,7 @@ class QuoteScreen extends ConsumerWidget {
                             color: PFColors.blush,
                             border: Border.all(color: PFColors.pink1.withValues(alpha: 0.25)),
                           ),
-                          child: _row('Total Due Now', money(q['total']!), bold: true),
+                          child: _row('Total Due Now', money(total), bold: true),
                         ),
 
                         const SizedBox(height: 12),
@@ -135,9 +168,24 @@ class QuoteScreen extends ConsumerWidget {
               ),
             ),
           ),
-        );
-      },
-    );
+          );
+        },
+      );
+    } catch (e, st) {
+      debugPrint('[QUOTE SCREEN] build crash: $e');
+      debugPrint('[QUOTE SCREEN] stack: $st');
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Something went wrong loading the quote.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _row(String left, String right, {bool bold = false}) {
